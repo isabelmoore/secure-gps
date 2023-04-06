@@ -1,0 +1,25 @@
+<launch>
+  <arg name="camera_value" default="0"/>
+  <arg name="use_vision" default="False"/>
+  <arg name="model" default="mkz"/>
+  
+  <include file="$(find-pkg-share dataspeed_dbw_gazebo)/launch/dataspeed_dbw_gazebo.launch.xml" >
+     <arg name="use_camera_control" value="True" />
+     <arg name="world_name" value="$(find-pkg-share dbw_gazebo_mkz)/worlds/test_track.world" />
+     <arg name="urdf_file" value="$(find-pkg-share dbw_gazebo_mkz)/urdf/mkz_test.urdf.xacro" />
+     <arg name="headless" value="false" />
+     <arg name="pause" value="false" />
+     <arg name="sim_param_file" value="$(find-pkg-share dbw_gazebo_mkz)/yaml/single_vehicle_test_track.yaml" />
+  </include>  
+
+  <include file="$(find-pkg-share custom_dbw_sim_examples)/launch/generic_dbw.launch.xml" >
+    <arg name="vehicle_name" value="vehicle" />
+    <arg name="vehicle_type" value="$(var model)" />
+  </include>
+
+</launch>
+
+
+
+
+
