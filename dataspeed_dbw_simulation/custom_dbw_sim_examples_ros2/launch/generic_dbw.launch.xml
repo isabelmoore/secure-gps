@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="vehicle_name" default="vehicle" />
+  <arg name="vehicle_type" default="mkz" />
+
+  <include if="$(eval '\'$(var vehicle_type)\'==\'mkz\' or \'$(var vehicle_type)\'==\'fusion\' or \'$(var vehicle_type)\'==\'mondeo\'')" file="$(find-pkg-share dbw_ford_can)/launch/dbw.launch.xml" >
+    <arg name="live" value="false" />
+    <arg name="load_urdf" value="false" />
+    <arg name="can_ns" value="can_bus_dbw" />
+    <arg name="vehicle_ns" value="$(var vehicle_name)" />
+    <arg name="ackermann_wheelbase" value="2.85" />
+    <arg name="steering_ratio" value="14.8" />
+  </include>
+  <include if="$(eval '\'$(var vehicle_type)\'==\'f150\'')" file="$(find-pkg-share dbw_ford_can)/launch/dbw.launch.xml" >
+    <arg name="live" value="false" />
+    <arg name="load_urdf" value="false" />
+    <arg name="can_ns" value="can_bus_dbw" />
+    <arg name="vehicle_ns" value="$(var vehicle_name)" />
+    <arg name="ackermann_wheelbase" value="3.67" />
+    <arg name="steering_ratio" value="18.0" />
+  </include>
+  <include if="$(eval '\'$(var vehicle_type)\'==\'jeep\'')" file="$(find-pkg-share dbw_fca_can)/launch/dbw.launch.xml" >
+    <arg name="live" value="false" />
+    <arg name="load_urdf" value="false" />
+    <arg name="can_ns" value="can_bus_dbw" />
+    <arg name="vehicle_ns" value="$(var vehicle_name)" />
+    <arg name="ackermann_wheelbase" value="2.91" />
+    <arg name="steering_ratio" value="15.15" />
+  </include>
+  <include if="$(eval '\'$(var vehicle_type)\'==\'pacifica\'')" file="$(find-pkg-share dbw_fca_can)/launch/dbw.launch.xml" >
+    <arg name="live" value="false" />
+    <arg name="load_urdf" value="false" />
+    <arg name="can_ns" value="can_bus_dbw" />
+    <arg name="vehicle_ns" value="$(var vehicle_name)" />
+    <arg name="ackermann_wheelbase" value="3.08" />
+    <arg name="steering_ratio" value="16.2" />
+  </include>
+
+</launch>

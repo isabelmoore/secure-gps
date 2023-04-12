@@ -23,7 +23,9 @@ find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-find_package(dbw_ford_msgs)
+find_package(dbw_ford_msgs REQUIRED)
+
+#find_package(xsens_mti_ros_node)
 
 #MSG- Location of odom msg, #scripts- run odompubtest.py for odom generation 
 install(DIRECTORY
@@ -53,6 +55,7 @@ install(PROGRAMS
   scripts/ros_callback.py
   scripts/pid.py
   scripts/low_pass_filter.py
+  scripts/odompubtest_realrunmkz.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

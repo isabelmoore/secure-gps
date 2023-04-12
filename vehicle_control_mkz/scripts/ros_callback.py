@@ -31,11 +31,11 @@ qs= QoSProfile(
 
 class RosCallbackDefine(Node):
 	def __init__(self,*args):
-		print("init")
+		
 		#### LONGITUDINAL TOPICS #### 
 		# TWIST CONTAINS FORWARD/ANGULAR VELOCITY
 		super().__init__('ROS_VEHICLE_CALLBACK')
-	
+		self.Node = Node
 		self.flag = [0,0]
 		
 		#DEF PUBLISHERS 

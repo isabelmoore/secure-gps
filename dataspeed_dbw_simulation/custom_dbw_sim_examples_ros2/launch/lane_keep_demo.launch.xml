@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="model" default="pacifica" />
+
+  <!-- Launch simulator and load vehicle model -->
+  <include file="$(find-pkg-share dataspeed_dbw_gazebo)/launch/dataspeed_dbw_gazebo.launch.xml" >
+    <arg name="use_camera_control" value="true" />
+    <arg name="world_name" value="$(find-pkg-share custom_dbw_sim_examples)/worlds/test_track.world" />
+    <arg name="sim_param_file" value="$(find-pkg-share custom_dbw_sim_examples)/yaml/$(var model)_test_track.yaml" />
+  </include>
+
+  <!-- Bring up demo programs -->
+  <include file="$(find-pkg-share dataspeed_dbw_gazebo_demo)/launch/lane_detection_pipeline_launch.py" />
+
+  <!-- ROS Driver for ADAS Kit -->
+  <include file="$(find-pkg-share custom_dbw_sim_examples)/launch/generic_dbw.launch.xml" >
+    <arg name="vehicle_name" value="vehicle" />
+    <arg name="vehicle_type" value="$(var model)" />
+  </include>
+
+  <!-- Pre-configured Rviz display -->
+  <node pkg="rviz2" exec="rviz2" name="lane_detection_rviz" args="-d $(find-pkg-share custom_dbw_sim_examples)/rviz/lane_detection.rviz" respawn="true" >
+    <param name="use_sim_time" value="true" />
+  </node>
+
+</launch>

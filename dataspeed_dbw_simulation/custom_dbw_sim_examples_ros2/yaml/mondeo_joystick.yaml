@@ -1,0 +1,11 @@
+- vehicle:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    start_gear: P
+    color: silver
+    pub_tf: false
+    model: mondeo
+    urdf_package: custom_dbw_sim_examples
+    urdf_path: urdf/mondeo_model.urdf.xacro
