@@ -106,7 +106,7 @@ class LongController(Node):
 				vxError = self.vx_desired - linearX 
 	
 				PIDcontroller.update(vxError)
-				print(vxError)
+				print(self.vx_desired,linearX,vxError)
 
 				if vxError >= -1.0:   
 
@@ -137,7 +137,7 @@ class LongController(Node):
 				topic_helper.publish_vehicle_long(throttle_cmd,brake_cmd)
 				
 				#### PRINT MESSAGES FOR DEBUG
-				#print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,linearX,throttle_cmd,brake_cmd,PIDcontroller.errorTotalReturn()))
+				print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,linearX,throttle_cmd,brake_cmd,PIDcontroller.errorTotalReturn()))
 			time.sleep(1/15)
 	def cmd_cb(self,msg):
 		#Not sure when or if cmd_cb is called back

@@ -1,3 +1,4 @@
+
 <launch>
   <arg name="camera_value" default="0"/>
   <arg name="use_vision" default="False"/>
@@ -16,7 +17,10 @@
     <arg name="vehicle_name" value="vehicle" />
     <arg name="vehicle_type" value="$(var model)" />
   </include>
+  
+  <node pkg="vehicle_control_mkz" exec="gazebo_twister.py" name="vehicle_initialize"/>
 
+  
 </launch>
 
 

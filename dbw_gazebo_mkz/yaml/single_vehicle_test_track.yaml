@@ -1,8 +1,10 @@
 - vehicle:
-    x: 0.0
-    y: -6.0
+    x: 20.0
+    y: 0.0
     z: 0.0
-    yaw: 8.0
+    yaw: 1.5707
     pub_tf: true
+    pub_odom: true
     model: mkz
+    color: red
 

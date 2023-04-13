@@ -25,6 +25,7 @@ class LatController(Node):
 		self.declare_parameter('WAYPOINTS_FILE', '/odom_waypoints.dat')
 		path = os.path.dirname(os.path.abspath(__file__))
 		WaypointFile = self.get_parameter("WAYPOINTS_FILE").get_parameter_value().string_value
+		print(WaypointFile)
 
 		wpfile = path + WaypointFile 
 		vehicle = "/config/MKZ.yaml" #YAML FILE NAME 
@@ -70,7 +71,7 @@ class LatController(Node):
 				topic_helper.publish_vehicle_lat(steercmd)			
                 # Publish the desired velocity			
                 #topic_helper.setDesiredVelocity(vCmd)
-				#print("\n SteerCmd: {} \n Curv: {}".format(steercmd, curv))
+				print("\n SteerCmd: {} \n Curv: {}".format(steercmd, curv))
 			time.sleep(1/50)
 	def sat_limit(self,val,low,upper):
 		#steering angle control params

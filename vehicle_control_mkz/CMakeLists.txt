@@ -55,7 +55,7 @@ install(PROGRAMS
   scripts/ros_callback.py
   scripts/pid.py
   scripts/low_pass_filter.py
-  scripts/odompubtest_realrunmkz.py
+  scripts/gazebo_twister.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
