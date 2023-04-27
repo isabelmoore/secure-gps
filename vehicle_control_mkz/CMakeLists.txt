@@ -56,6 +56,7 @@ install(PROGRAMS
   scripts/pid.py
   scripts/low_pass_filter.py
   scripts/gazebo_twister.py
+  scripts/Waypoint_plotter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

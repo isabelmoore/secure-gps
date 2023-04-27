@@ -24,7 +24,8 @@ qs = QoSProfile(
 )
 
 class Collect_Waypoints(Node):
-    def __init__(self):
+    def __init__(self,rate=50):
+        self.rate = rate
         super().__init__("Collect_Waypoints")
         #setting flag for pathpoint array generation after callback
         self.flag = 0
@@ -36,19 +37,10 @@ class Collect_Waypoints(Node):
         self.pathArray = []
         #start point
         self.point = [0,0]
-        self.subscription1 = self.create_subscription(Odometry,"/vehicle/odom1",self.quat_callback, qs) # SEE ROS1 WAYPOINT GITHUB FOR OTHER SUBSCRIBERS
-        rate = self.create_rate(50)
-        while rclpy.ok():
-            if self.flag == 1:
-                #x,y
-                self.pathArray.append([self.point[0], self.point[1]])
-            with open(self.filename, 'w') as file:
-                for row in self.pathArray:
-                    #writing to DAT File (location in lib folder of pkg)
-                    file.write(','.join([str(x) for x in row]))
-                    file.write('\n')
-            rclpy.spin_once(self) #spinning in while loop due to issues with rclpy.spin() outside of node (tried threading,generic rclpy.spin())
-        rate.sleep()
+        self.subscription1 = self.create_subscription(Odometry,"/vehicle/odom1",self.quat_callback, 1) # SEE ROS1 WAYPOINT GITHUB FOR OTHER SUBSCRIBERS
+        self.timer = self.create_timer(1/self.rate,self.service_callback)
+
+    
     
     def quat_callback(self,data,*args):
         x = data.pose.pose.position.x
@@ -56,13 +48,23 @@ class Collect_Waypoints(Node):
         #temp=utm.from_latlon(lat_,long_)	
         self.point[0] = x
         self.point[1] = y
-        print (self.point[0],self.point[1], "\n")
-        self.flag = 1
+        self.pathArray.append([self.point[0], self.point[1]])
+        with open(self.filename, 'w') as file:
+            for row in self.pathArray:
+                #writing to DAT File (location in lib folder of pkg)
+                file.write(','.join([str(x) for x in row]))
+                file.write('\n')
+    
+    def service_callback(self):
+        self.get_logger().info('Waypoint_generation recieved,recording...')
+
+    
 
 			
 def main(args=None):
     rclpy.init(args=args)
     cw= Collect_Waypoints()
+    rclpy.spin(cw)
     
 
 if __name__ == '__main__':

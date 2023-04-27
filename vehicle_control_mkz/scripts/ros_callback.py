@@ -143,7 +143,7 @@ class RosCallbackDefine(Node):
 		self.brakeMsg.pedal_cmd_type = 2
 		self.steeringMsg.enable = True
 		#LONG TOPICS
-		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.__speed_cb, qs)
+		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.__speed_cb, 1)
 		self.pubThrottle = self.create_publisher(ThrottleCmd,'/vehicle/throttle_cmd',1)
 		self.pubBrake = self.create_publisher(BrakeCmd,'/vehicle/brake_cmd',1)
 		# COMMAND THROTTLE TOPIC
@@ -151,6 +151,6 @@ class RosCallbackDefine(Node):
 	
 		#### LATERAL TOPICS #### 
 		self.pubSteer = self.create_publisher(SteeringCmd,'/vehicle/steering_cmd',1)
-		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
+		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,1)
 		### Adjusting Desired Velocity
 		self.setVelPub = self.create_publisher(Float64,"/long_controller/cmd_vel",1)

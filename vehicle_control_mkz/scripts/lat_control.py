@@ -20,12 +20,11 @@ class LatController(Node):
 	def __init__(self):
 		super().__init__('LatController')
 		path = os.path.dirname(os.path.abspath(__file__))
-
 		# GETTING PARAM FOR WAYPOINT FILE NAME 
 		self.declare_parameter('WAYPOINTS_FILE', '/odom_waypoints.dat')
 		path = os.path.dirname(os.path.abspath(__file__))
 		WaypointFile = self.get_parameter("WAYPOINTS_FILE").get_parameter_value().string_value
-		print(WaypointFile)
+
 
 		wpfile = path + WaypointFile 
 		vehicle = "/config/MKZ.yaml" #YAML FILE NAME 

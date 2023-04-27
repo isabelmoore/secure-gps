@@ -78,6 +78,7 @@ class LinearFilter(Filter):
 
 		# Latest filtered value 
 		super(LinearFilter,self).update_filter(temp)	
+		print("Temp..",temp)
 		return temp
 
 	
@@ -86,6 +87,7 @@ class LinearFilter(Filter):
 class NonLinearFilter(Filter):
 		
 	def __init__(self,order,cons=None):
+	
 		#### We use the super keyword to avoid directly referring to the base class...
 		#### In python3.0 it's a lot easier to use than in python 2.7
 		super(NonLinearFilter, self).__init__(order,cons)

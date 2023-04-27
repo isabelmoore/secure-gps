@@ -6,6 +6,7 @@ from vehicle_control_mkz.msg import A9
 from sensor_msgs.msg import NavSatFix
 from sensor_msgs.msg import Imu
 from tf_transformations import quaternion_from_euler as QOE
+from tf_transformations import euler_from_quaternion as EFQ
 import utm
 import numpy as np
 import sys
@@ -15,121 +16,144 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,QoSDura
 #from custom_msgs.msg import positionEstimate SEE DOCUMENTATION ON ROS2 FOR REAL
 #from custom_msgs.msg import orientationEstimate SEE DOCUMENTATION ON ROS2 FOR REAL
 import threading 
-#def QOS
-qs= QoSProfile(
-    reliability=QoSReliabilityPolicy.RELIABLE,
-    durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
-    history=QoSHistoryPolicy.KEEP_ALL
-)
 
-class MessageHandle:
-    def __init__(self):
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
-        self.roll =0.0
-        self.pitch = 0.0
-        self.yaw = 0.0
-        self.qx = 0.0
-        self.qy = 0.0
-        self.qz = 0.0
-        self.qw = 0.0
+# The sim flag is used to determine which set of subscribers and callbacks to use
+# This could be done with launch file where you load a parameter and then use that
+# But this hopefully give you an idea of how to use the parameter when you get to that point
 
-    def returnStates(self):
-        return [self.x, self.y, self.z, self.roll, self.pitch, self.yaw, 
-                self.qx, self.qy, self.qz, self.qw]
-    
-    def callback_p(self,msg,*args):
-        #"MKZSIM"
-        temp = (msg.latitude,msg.longitude)
-        temp = utm.from_latlon(msg.latitude, msg.longitude)
-        self.x = temp[0]
-        self.y = temp[1]
-
-
-    def callback_o(self,msg,*args):
-        # Convert from NED to ENU
-        self.yaw = np.mod(2*np.pi + np.pi/2 - np.radians(msg.orientation.w),2*np.pi)
-        q=QOE(0.0,0.0,self.yaw)
-        self.qx = q[0]
-        self.qy = q[1]
-        self.qz = q[2]
-        self.qw = q[3]
-
-
-class Sensor_Fusion_Node(Node):
-    def __init__(self,mh):
+class SensorFusionNode(Node):
+    def __init__(self, sim=True, rate=50):
+        # Load the parameters in case you want to use them elsewhere
+        self.sim = sim
+        self.rate = rate
+        self.or_flag = 0
+        self.pos_flag = 0
         #Starting sensor
         super().__init__('Sensor_Fusion_Node')
-        # define conditional if real and fake 
+        
+        # Define QoS
+        qs= QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
+                history=QoSHistoryPolicy.KEEP_ALL
+                )
+    
         #FOR SIM ONLY 
-        self.subscription1 = self.create_subscription(Imu,"/vehicle/imu/data_raw",mh.callback_o, qs)
-        self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix",mh.callback_p, qs)
+        if self.sim:
+            self.subscription1 = self.create_subscription(Imu,"/vehicle/imu/data_raw", self.sim_orientation_cb, 1)
+            self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix", self.sim_position_cb, 1)
+        
+        # For Real MKZ
+        if not self.sim:
+            # Otherwise use another set of subscibers and callbacks
+            pass
+        
         #Publish ODOM TOPICS 
-        self.publisher1 = self.create_publisher(A9,'/vehicle/odom2',1)
-        self.publisher2 = self.create_publisher(Odometry,'/vehicle/odom1',1)
+        self.publisher1 = self.create_publisher(Odometry,'/vehicle/odom1',1)
+        self.publisher2 = self.create_publisher(A9,'/vehicle/odom2',1)
+        
+        # Define global output message variables
+        self.odomQuat = Odometry()
+        self.odomEuler = A9()
+        
+        # [x, y, yaw] just for display purposes
+        self.veh_pose = [0.0, 0.0, 0.0]
+        
+        # Create timer to publish
+        self.timer = self.create_timer(1/self.rate, self.publish)
+        
+        
+    def publish(self):
 
-odomQuat = Odometry()
-odomEuler = A9()
+        #### Publish 	
+        if self.pos_flag == 1: 
+            self.publisher1.publish(self.odomQuat)
+        if self.or_flag == 1:
+            self.publisher2.publish(self.odomEuler)
+        
+        #### Print
+        self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
+        # self.get_logger().info("Publishing: {}".format(self.odomQuat))
+        # self.get_logger().info("Publishing: {}".format(self.odomEuler))
 
 
+    def sim_position_cb(self, msg: NavSatFix):
+        # Convert from NED to ENU
+        self. pos_flag = 1
+        utm_pose = utm.from_latlon(msg.latitude, msg.longitude)
+        
+        # Fill in class variables
+        self.odomEuler.x = utm_pose[0]
+        self.odomEuler.y = utm_pose[1]
+        self.odomEuler.z = msg.altitude
+        
+        # Fill in display print display variable
+        self.veh_pose[0] = utm_pose[0]
+        self.veh_pose[1] = utm_pose[1]
+
+        self.odomQuat.pose.pose.position.x = utm_pose[0]	
+        self.odomQuat.pose.pose.position.y = utm_pose[1]
+        self.odomQuat.pose.pose.position.z = msg.altitude
+        
+
+
+
+    def sim_orientation_cb(self, msg: Imu):
+        # Fill in the quaternion message
+        self.or_flag =1
+        self.odomQuat.header = msg.header
+        self.odomQuat.pose.pose.orientation = msg.orientation
+        
+        
+        # Get the euler angles from the quaternion
+        euler = EFQ([msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
+        
+        # Fill them into the message
+        self.odomEuler.header = msg.header
+        self.odomEuler.roll = euler[0]
+        self.odomEuler.pitch = euler[1]
+        self.odomEuler.yaw = euler[2]
+     
+        # Fill in display print display variable
+        self.veh_pose[2] = euler[2]
+    
+    # This is kennys prior method for converting the quaternion to euler in my format
+    # def sim_orientation_cb(self, msg: Imu):
+    #     # The IMU message already has a quaternion and the output of this node is also a quaternion
+    #     # Instead you could just do this:
+    #     # self.odomQuat.pose.pose.orientation = msg.orientation
+    #     # And if you need to know yaw for some reason you can still get it from the quaternion
+        
+    #     # Convert from NED to ENU
+    #     yaw = np.mod(2*np.pi + np.pi/2 - np.radians(msg.orientation.w),2*np.pi)
+        
+    #     # Convert to quaternion
+    #     q=QOE(0.0, 0.0, yaw)
+        
+    #     # Place into message
+    #     self.odomQuat.header = msg.header
+    #     self.odomQuat.pose.pose.orientation.x = q[0]
+    #     self.odomQuat.pose.pose.orientation.y = q[1]
+    #     self.odomQuat.pose.pose.orientation.z = q[2]
+    #     self.odomQuat.pose.pose.orientation.w = q[3]
+        
+    #     self.odomEuler.roll = 0.0
+    #     self.odomEuler.pitch = 0.0
+    #     self.odomEuler.yaw = yaw
 
 def main(args=None):
-    
-    #initializaiton of message handling node 
-    ###############
-    #################
     rclpy.init(args=args)
-    mh=MessageHandle() 
-    argv = sys.argv
-    Sf = Sensor_Fusion_Node(mh)
-    thread = threading.Thread(target=rclpy.spin, args=(Sf, ), daemon=True)
-    thread.start()
-    rate = Sf.create_rate(50)
-    ##initalize coordinates###
-    x = 0.0
-    y = 0.0
-    z = 0.0
-    roll = 0.0
-    pitch = 0.0
-    yaw = 0.0
-    x = 0.0
-    qy = 0.0
-    qz = 0.0
-    qw = 0.0
-    ####
-
-    while rclpy.ok():
-        #### Fill in the messages for quaternion odometry 
-        x,y,z,roll,pitch,yaw,qx,qy,qz,qw=mh.returnStates()
-        odomQuat.pose.pose.orientation.x = qx
-        odomQuat.pose.pose.orientation.y = qy
-        odomQuat.pose.pose.orientation.z = qz
-        odomQuat.pose.pose.orientation.w = qw
-        odomQuat.pose.pose.position.x = x	
-        odomQuat.pose.pose.position.y = y	
-        odomQuat.pose.pose.position.z = z	
-        odomQuat.header.frame_id = "Testing Kennys code translated"
-        #odomQuat.header.seq = count, TRANSLATED 
-        odomQuat.header.stamp = Sf.get_clock().now().to_msg()
-        #### Fill in euler odometry
-        odomEuler.x = x
-        odomEuler.y = y
-        odomEuler.z = z
-        odomEuler.roll = roll
-        odomEuler.pitch = pitch
-        odomEuler.yaw = yaw
-        #odomEuler.header.seq = count, TRANSLATED 
-        odomEuler.header.stamp = Sf.get_clock().now().to_msg()	
-        #### Publish 	
-        Sf.publisher2.publish(odomQuat)
-        Sf.publisher1.publish(odomEuler)
-        #### Sleep and count
-        #count += 1
-        print ("\t x[utm]={} \n\t y[utm]={} \n\t z[m]={} \n\t roll[rad]={} \n\t pitch[rad]={} \n\t yaw[rad]={} \n\t qx={} \n\t qy={} \n\t qz={} \n\t qw={} \n".format(x,y,z,roll,pitch,yaw,qx,qy,qz,qw))
-        rate.sleep()
-
-
+    
+    # Create the node
+    sf = SensorFusionNode()
+    
+    # Spin for callbacks
+    rclpy.spin(sf)
+    
+    # Destroy the node after Ctrl+C
+    sf.destroy_node()
+    rclpy.shutdown()
+        
 
 if __name__ == '__main__':
     main()

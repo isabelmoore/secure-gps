@@ -21,12 +21,10 @@ class SteeringMethods:
         self.pathArray = np.array([list(map(float, x.split(','))) for x in self.pathArray])
         self.pathArray = np.array([[float(y) for y in x] for x in self.pathArray])
 
-
         self.LA = lookAhead
         self.WB = wheelBase
         self.Sr = steeringRatio	
-        #print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,self.vx_measure,throttleMsg.pedal_cmd,brakeMsg.pedal_cmd,PIDcontroller.errorTotalReturn()))
-	
+        
     #### MISC FUNCTIONS
     def satValues(self,value,satLower, satUpper):
         if value >= satUpper:
@@ -36,8 +34,9 @@ class SteeringMethods:
         else:
             return value
     def readtext(self):
-        self,filename = ('circlefixedutm_example.dat')
+        self,filename = ('/odom_waypoints.dat ')
         txt  = np.loadtxt(filename,delimiter=',')
+ 
         return txt
     def angleDiff(self,a,b):
         diff = a-b 
@@ -60,7 +59,6 @@ class SteeringMethods:
         
     def methodAdaptiveLookAhead(self,lMIn,lMax,gamma,poseX,poseY,yaw,linearX,curv):
             self.LA = linearX + 1 
-            print("Adaptive Lookahead:",self.LA)
             
     def methodAdaptiveVelocity(self,vMin,vMax,ayLim,curv):
         vCmd = 0.85* np.sqrt((ayLim/(abs(curv)+0.00005)))
@@ -80,9 +78,7 @@ class SteeringMethods:
         wheelBase = self.WB
         lookAhead = self.LA
         steeringRatio = self.Sr
-        print(lookAhead)	
         diff = self.pathArray - np.array([pose_x,pose_y]) #find closest waypoint
-        print(diff)
         diffSq = diff[:,0]**2 + diff[:,1]**2
         minInd = np.argmin(diffSq)
         distList = np.sqrt(diffSq)
@@ -98,9 +94,10 @@ class SteeringMethods:
         targetX = self.pathArray[targetPoint][0]
         targetY = self.pathArray[targetPoint][1]
         absoluteBearing = np.arctan2(targetY - pose_y, targetX - pose_x)
+        #print("poses:",pose_y,pose_x,pose_y)
         relativeBearing = self.angleDiff(absoluteBearing,yaw)
         curv = 2*np.sin(relativeBearing)/distList[targetPoint]
         wpmutex.release()
         steercmd = steeringRatio*np.arctan2(wheelBase*curv,1)
-        print(targetPoint, minInd, distList[i], relativeBearing)
+        #print("method pursuit",targetPoint, minInd, distList[i], relativeBearing)
         return steercmd, curv, absoluteBearing,relativeBearing, targetPoint 
