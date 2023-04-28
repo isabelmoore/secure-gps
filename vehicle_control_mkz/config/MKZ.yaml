@@ -26,7 +26,7 @@ Tol: 0.5
 Adaptive:
  lMin: 5.
  lMax: 7.
- vMin: 3
+ vMin: 0
  vMax: 8
  gamma: 0.75
  ayLim: 0.5

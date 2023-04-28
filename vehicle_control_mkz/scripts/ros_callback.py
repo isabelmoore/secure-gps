@@ -47,13 +47,7 @@ class RosCallbackDefine(Node):
 		
 
 
-	def return_states(self):
-		if sum(self.flag) == len(self.flag):
 
-			return [self.linearX, self.pose_x, self.pose_y, self.yaw]
-		else:
-	
-			return [0]
 	def return_waypoints(self):
 
 		global timeBefore

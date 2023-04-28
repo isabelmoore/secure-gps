@@ -17,10 +17,10 @@
 		<node pkg="vehicle_control_mkz" exec="long_control.py" name="long_control_node" output="screen">
 			<param name="DESIRED_SPEED" value="$(var DESIRED_SPEED)"/>
 		</node>
-		<!--node pkg="vehicle_control_mkz" exec="lat_control.py" name="lat_control_node" output="screen">
+		<node pkg="vehicle_control_mkz" exec="lat_control.py" name="lat_control_node" output="screen">
 			<param name="DESIRED_SPEED" value="$(var DESIRED_SPEED)"/>
 			<param name="WAYPOINTS_FILE" value="$(var WAYPOINTS_FILE)"/>
-		</node!-->
+		</node>
 	</group>
 		
 	<group if="$(var IS_CP)">
