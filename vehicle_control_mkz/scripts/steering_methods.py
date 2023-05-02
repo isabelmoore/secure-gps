@@ -78,7 +78,11 @@ class SteeringMethods:
         wheelBase = self.WB
         lookAhead = self.LA
         steeringRatio = self.Sr
+        print('Look ahead:',lookAhead)
+        print(self.pathArray)
+        print(pose_x,pose_y)
         diff = self.pathArray - np.array([pose_x,pose_y]) #find closest waypoint
+        print("closest waypoint:",diff)
         diffSq = diff[:,0]**2 + diff[:,1]**2
         minInd = np.argmin(diffSq)
         distList = np.sqrt(diffSq)
@@ -99,5 +103,5 @@ class SteeringMethods:
         curv = 2*np.sin(relativeBearing)/distList[targetPoint]
         wpmutex.release()
         steercmd = steeringRatio*np.arctan2(wheelBase*curv,1)
-        #print("method pursuit",targetPoint, minInd, distList[i], relativeBearing)
+        print("method pursuit",targetPoint, minInd, distList[i], relativeBearing)
         return steercmd, curv, absoluteBearing,relativeBearing, targetPoint 

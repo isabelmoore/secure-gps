@@ -7,4 +7,6 @@
     pub_odom: true
     model: mkz
     color: red
+    urdf_package: dbw_gazebo_mkz
+    urdf_path: urdf/mkz.urdf.xacro
 

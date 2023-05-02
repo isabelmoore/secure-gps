@@ -1,9 +1,0 @@
-- vehicle:
-    x: 0.0
-    y: -6.0
-    z: 0.0
-    yaw: 0.0
-    pub_tf: true
-    model: mondeo
-    urdf_package: custom_dbw_sim_examples
-    urdf_path: urdf/mondeo_model.urdf.xacro

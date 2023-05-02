@@ -32,15 +32,12 @@ class SensorFusionNode(Node):
         super().__init__('Sensor_Fusion_Node')
         
         # Define QoS
-        qs= QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
+        qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
                 durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
-                history=QoSHistoryPolicy.KEEP_ALL
-                )
-    
+                history=QoSHistoryPolicy.KEEP_LAST, depth=1)
         #FOR SIM ONLY 
         if self.sim:
-            self.subscription1 = self.create_subscription(Imu,"/vehicle/imu/data_raw", self.sim_orientation_cb, 1)
+            self.subscription1 = self.create_subscription(Odometry,"/vehicle/ground_truth_odom", self.sim_orientation_cb, 1)
             self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix", self.sim_position_cb, 1)
         
         # For Real MKZ
@@ -98,15 +95,15 @@ class SensorFusionNode(Node):
 
 
 
-    def sim_orientation_cb(self, msg: Imu):
+    def sim_orientation_cb(self, msg: Odometry):
         # Fill in the quaternion message
         self.or_flag =1
         self.odomQuat.header = msg.header
-        self.odomQuat.pose.pose.orientation = msg.orientation
+        self.odomQuat.pose.pose.orientation = msg.pose.pose.orientation
         
         
         # Get the euler angles from the quaternion
-        euler = EFQ([msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
+        euler = EFQ([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         
         # Fill them into the message
         self.odomEuler.header = msg.header
@@ -151,6 +148,8 @@ def main(args=None):
     rclpy.spin(sf)
     
     # Destroy the node after Ctrl+C
+    sf.destroy_node()
+    rclpy.shutdown()
     sf.destroy_node()
     rclpy.shutdown()
         

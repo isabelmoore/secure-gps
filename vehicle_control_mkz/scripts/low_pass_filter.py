@@ -78,7 +78,7 @@ class LinearFilter(Filter):
 
 		# Latest filtered value 
 		super(LinearFilter,self).update_filter(temp)	
-		print("Temp..",temp)
+
 		return temp
 
 	
@@ -123,7 +123,7 @@ class NonLinearFilter(Filter):
 		else:
 			vals_= P/(len_-1.0)
 		self.cons[1:len_]  = [vals_]*(len_-1)
-		print(self.cons, [vals_]*(len_-1))
+	
 
 		# Compute Weighted Filtered Value
 		temp=0.0

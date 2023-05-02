@@ -17,11 +17,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
 
-qs = QoSProfile(
-    reliability=QoSReliabilityPolicy.RELIABLE,
-    durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
-    history=QoSHistoryPolicy.KEEP_ALL
-)
+qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
+                durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
+                history=QoSHistoryPolicy.KEEP_LAST, depth=1)
 
 class Collect_Waypoints(Node):
     def __init__(self,rate=50):
@@ -38,7 +36,7 @@ class Collect_Waypoints(Node):
         #start point
         self.i = 0
         self.point = [0,0]
-        self.subscription1 = self.create_subscription(Odometry,"/vehicle/odom1",self.quat_callback,1) # SEE ROS1 WAYPOINT GITHUB FOR OTHER SUBSCRIBERS
+        self.subscription1 = self.create_subscription(Odometry,"/vehicle/odom1",self.quat_callback, qs) # SEE ROS1 WAYPOINT GITHUB FOR OTHER SUBSCRIBERS
         self.timer = self.create_timer(1/self.rate,self.service_callback)
 
     

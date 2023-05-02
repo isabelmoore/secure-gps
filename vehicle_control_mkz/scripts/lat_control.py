@@ -64,8 +64,8 @@ class LatController(Node):
 		#Get steering angle
 		self.steeringFF = SteeringMethods(self.wpfile,lookAhead,wheelBase,steeringRatio)
 		#subscribers
-		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
-		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,qs)
+		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,1)
+		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,1)
 		#####
 		states = [0]
 		#TIMER
@@ -74,9 +74,8 @@ class LatController(Node):
 
 
 	def return_states(self):
-		print(self.cb_flag)
 		if self.cb_flag == [1,1]:
-			print("return_States")
+
 			states = [self.linearX,self.pose_x,self.pose_y,self.yaw]
 			self.flag = 1 
 
@@ -86,7 +85,7 @@ class LatController(Node):
 			
 		###CALLING APPROPRIATE FUNCTIONS IF LENGTH IS VALID
 		if len(states) >= 4:
-			print("true",len(states),print(states))
+
 			self.pubSteer = self.create_publisher(SteeringCmd,'/vehicle/steering_cmd',1)
 			self.steering(states,self.steeringFF)
 			self.flag = 1
@@ -95,6 +94,7 @@ class LatController(Node):
 
 
 	def __odom_cb(self,msg):
+		print("odom_cb")
 		self.pose_x = msg.x#msg.pose.pose.position.x
 		self.pose_y = msg.y#msg.pose.pose.position.y
 		#quat = msg.pose.pose.orientation
@@ -105,18 +105,19 @@ class LatController(Node):
 		self.cb_flag[0] = 1
 	
 	def lat_speed_cb(self,msg):
+		print("lat_speed_cb")
 		self.linearX = msg.twist.linear.x
 		self.cb_flag[1] = 1 
 	
 
 	def publish(self):
 			self.return_states()
-			print("pub")
+
 			###
 			if self.flag == 1:
-				self.steeringMsg.steering_wheel_angle_cmd = self.steercmd
+				self.steeringMsg.steering_wheel_angle_cmd = self.steercmd_f
 				self.pubSteer.publish(self.steeringMsg)	
-				self.get_logger().info("Publishing Lateral Controller")
+				#self.get_logger().info("Publishing Lateral Controller")
 			else:
 				pass 
 
@@ -130,7 +131,7 @@ class LatController(Node):
 		steeringFF.methodAdaptiveLookAhead(self.lMin, self.lMax, self.gamma, states[1], states[2], states[3], states[0], self.curv)
 		#limit steer angle 
 		self.steercmd_f = self.sat_limit(self.steercmd,self.steerLim_lower,self.steerLim_upper)
-		print("\n SteerCmd: {} \n Curv: {}".format(self.steercmd, self.curv))
+		print("\n SteerCmd: {} \n Curv: {}".format(self.steercmd_f, self.curv))
 
 	def sat_limit(self,val,low,upper):
 		#steering angle control params
@@ -141,11 +142,25 @@ class LatController(Node):
 		else:
 			return val
 
+def main(args=None):
+	rclpy.init(args=args)
+	latc= LatController()
+	rclpy.spin(latc)
+		
+	# Create the node
+	# Spin for callback
+		
+	# Destroy the node after Ctrl+C
+	latc.destroy_node()
+	rclpy.shutdown()
+
+			
+
+
 
 if __name__=="__main__":
-    rclpy.init()
-    latc= LatController()
-    rclpy.spin(latc)
+    main()
+
 
 
     

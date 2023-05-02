@@ -6,12 +6,13 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import TwistStamped
 from rclpy.parameter import Parameter
 from pid import PID
-
+from dbw_ford_msgs.msg import SteeringCmd
 from low_pass_filter import LinearFilter
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,QoSDurabilityPolicy
 
 import yaml
 import os
+import time
 
 #### TO CHANGE ROS WORKING DIRECTORY
 #### export ROS_HOME=$HOME 
@@ -29,9 +30,10 @@ from vehicle_control_mkz.msg import A9
 class LongController(Node):
 	def __init__(self, sim=True, rate=50):
 		###set simulation/rate###
+		time.sleep(1/15)
 		self.sim = sim
 		self.rate = rate
-		self.state_flag = 0
+		self.state_flag = [0,0]
 		### init node##
 		super().__init__('long_controller_node')
 		#DEF SELF FLAG 
@@ -103,7 +105,6 @@ class LongController(Node):
 		states = []
 		###CALLING APPROPRIATE FUNCTIONS IF LENGTH IS VALID
 		if len(states) != 0:
-			print("PASSED_TRUE")
 			self.publishTrue
 			self.pubThrottle = self.create_publisher(ThrottleCmd,'/vehicle/throttle_cmd',1)
 			self.pubBrake = self.create_publisher(BrakeCmd,'/vehicle/brake_cmd',1)
@@ -111,7 +112,6 @@ class LongController(Node):
 			pass
 
 	def publish(self):
-		print("CB")
 		self.return_states()
 		###
 		if self.flag == 1:
@@ -119,13 +119,12 @@ class LongController(Node):
 			self.brakeMsg.pedal_cmd = self.brake_cmd
 			self.pubThrottle.publish(self.throttleMsg)
 			self.pubBrake.publish(self.brakeMsg)
-			self.get_logger().info("Publishing Longitudinal Controller")
+			#self.get_logger().info("Publishing Longitudinal Controller")
 		else:
 			pass 
 	
 	def return_states(self):
-		if self.state_flag == 1:
-			print("return_States")
+		if self.state_flag == [1,1]:
 			states = [self.linearX]
 			self.pubThrottle = self.create_publisher(ThrottleCmd,'/vehicle/throttle_cmd',1)
 			self.pubBrake = self.create_publisher(BrakeCmd,'/vehicle/brake_cmd',1)
@@ -139,8 +138,8 @@ class LongController(Node):
 	def __speed_cb(self,msg,*args):
 		#### MKZ CASE ####
 		self.linearX = msg.twist.linear.x
-		print(self.linearX)
-		self.state_flag = 1 
+		self.state_flag = [1,1]
+
 
 	
 	def publishTrue(self,states,PIDcontroller,errTol,PLIST_throttle,PLIST_LEBrake,PLIST_SEBrake,throttleFilter,brakeFilter):
@@ -148,7 +147,6 @@ class LongController(Node):
 			vxError = self.vx_desired - states[0]
 			PIDcontroller.update(vxError)
 			if vxError >= -1.0:   
-				print("Throttle")
 				PIDcontroller.setGains(PLIST_throttle[0]*vxError,PLIST_throttle[1],PLIST_throttle[2]*vxError)
 				u = PIDcontroller.computeControl()      # Compute Control input
 				u = self.satValues(u,0.0,1.0)           # Bound control input
@@ -158,7 +156,6 @@ class LongController(Node):
 
 			elif vxError < -1.0:
 				if abs(vxError) >= errTol:
-					print("Brake")
 					PIDcontroller.setGains(PLIST_LEBrake[0]*vxError,PLIST_LEBrake[1],PLIST_LEBrake[2]*vxError)
 					u = PIDcontroller.computeControl()      # Compute Control input
 					u = self.satValues(u,0.0,1.0)           # Bound control input
@@ -181,7 +178,6 @@ class LongController(Node):
 		
 
 				####  MESSAGES FOR DEBUG
-			print(vxError)
 			print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,states[0],self.throttle_cmd,self.brake_cmd,PIDcontroller.errorTotalReturn()))
 
 	def satValues(self,value,satLower, satUpper):
@@ -195,9 +191,17 @@ class LongController(Node):
 	
 	def lowpass(self,val,prev,alp):
 		return alp*val + (1-alp)*prev
+	
+def main(args=None):
+	rclpy.init()
+	lc = LongController()
+	rclpy.spin(lc)
+	lc.destroy_node()
+	rclpy.shutdown()
+		
 
-    
+
+
+
 if __name__=="__main__":
-    rclpy.init()
-    lc = LongController()
-    rclpy.spin(lc)
+    main()

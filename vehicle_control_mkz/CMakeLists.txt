@@ -57,6 +57,7 @@ install(PROGRAMS
   scripts/low_pass_filter.py
   scripts/gazebo_twister.py
   scripts/Waypoint_plotter.py
+  scripts/follow_waypoints.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
