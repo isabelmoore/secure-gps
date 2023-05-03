@@ -21,7 +21,7 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 find_package(dataspeed_dbw_gazebo REQUIRED)
 find_package(dataspeed_dbw_gazebo_plugins REQUIRED)
-find_package(custom_dbw_sim_examples REQUIRED)
+
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)

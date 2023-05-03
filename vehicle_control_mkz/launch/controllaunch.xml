@@ -6,6 +6,9 @@
 
 	<!-- Desired forward speed-->
 	<arg name="DESIRED_SPEED" default="3.0"/>
+	
+	<!-- Real/sim -->
+	<arg name="SIM" default="SIM"/>
 
 	<!--circlefixed_example.dat is a circle of radius 20m for mkz sim -->
 	<!--ENTER /odom_waypoints.dat or /config/circlefixedutm_example.dat -->
@@ -13,7 +16,9 @@
 
 	<!--:= IS_CP == TRUE for waypoint generation, IS_CP == FALSE for controller run -->
 	<group unless="$(var IS_CP)">
-		<node pkg="vehicle_control_mkz" exec="odompubtest_mkz.py" name="odom_publisher_node"/>
+		<node pkg="vehicle_control_mkz" exec="odompubtest_mkz.py" name="odom_publisher_node">
+			<param name="SIM" value="$(var SIM)"/>
+		</node>
 		<node pkg="vehicle_control_mkz" exec="follow_waypoints.py" name="waypoint_plot"/>
 		<node pkg="vehicle_control_mkz" exec="long_control.py" name="long_control_node" output="screen">
 			<param name="DESIRED_SPEED" value="$(var DESIRED_SPEED)"/>
@@ -25,7 +30,9 @@
 	</group>
 		
 	<group if="$(var IS_CP)">
-		<node pkg="vehicle_control_mkz" exec="odompubtest_mkz.py" name="odom_publisher_node"/>
+		<node pkg="vehicle_control_mkz" exec="odompubtest_mkz.py" name="odom_publisher_node">
+			<param name="SIM" value="$(var SIM)"/>
+		</node>
 		<node pkg="vehicle_control_mkz" exec="collect_waypoints.py" name="waypoint_collection_node" output="screen">
 			<param name="WAYPOINTS_FILE" value="$(var WAYPOINTS_FILE)"/>
 		</node>

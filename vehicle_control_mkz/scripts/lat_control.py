@@ -64,8 +64,8 @@ class LatController(Node):
 		#Get steering angle
 		self.steeringFF = SteeringMethods(self.wpfile,lookAhead,wheelBase,steeringRatio)
 		#subscribers
-		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,1)
-		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,1)
+		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
+		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,qs)
 		#####
 		states = [0]
 		#TIMER

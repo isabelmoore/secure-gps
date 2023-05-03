@@ -22,9 +22,11 @@ import threading
 # But this hopefully give you an idea of how to use the parameter when you get to that point
 
 class SensorFusionNode(Node):
-    def __init__(self, sim=True, rate=50):
+    def __init__(self, rate=50):
+        super().__init__('Sensor_Fusion_Node')
         # Load the parameters in case you want to use them elsewhere
-        self.sim = sim
+        self.declare_parameter('SIM', 'SIM')
+        self.sim = self.get_parameter('SIM').get_parameter_value().string_value
         self.rate = rate
         self.or_flag = 0
         self.pos_flag = 0
@@ -36,12 +38,12 @@ class SensorFusionNode(Node):
                 durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
                 history=QoSHistoryPolicy.KEEP_LAST, depth=1)
         #FOR SIM ONLY 
-        if self.sim:
+        if self.sim == 'SIM':
             self.subscription1 = self.create_subscription(Odometry,"/vehicle/ground_truth_odom", self.sim_orientation_cb, 1)
             self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix", self.sim_position_cb, 1)
         
         # For Real MKZ
-        if not self.sim:
+        if self.sim == 'REAL':
             # Otherwise use another set of subscibers and callbacks
             pass
         
@@ -63,9 +65,8 @@ class SensorFusionNode(Node):
     def publish(self):
 
         #### Publish 	
-        if self.pos_flag == 1: 
+        if (self.pos_flag == 1) and (self.or_flag ==1): 
             self.publisher1.publish(self.odomQuat)
-        if self.or_flag == 1:
             self.publisher2.publish(self.odomEuler)
         
         #### Print
