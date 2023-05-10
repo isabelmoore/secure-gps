@@ -119,7 +119,7 @@ class LongController(Node):
 			self.brakeMsg.pedal_cmd = self.brake_cmd
 			self.pubThrottle.publish(self.throttleMsg)
 			self.pubBrake.publish(self.brakeMsg)
-			#self.get_logger().info("Publishing Longitudinal Controller")
+			self.get_logger().info("Publishing Longitudinal Controller")
 		else:
 			pass 
 	
@@ -147,6 +147,7 @@ class LongController(Node):
 			vxError = self.vx_desired - states[0]
 			PIDcontroller.update(vxError)
 			if vxError >= -1.0:   
+				print("throttle",vxError)
 				PIDcontroller.setGains(PLIST_throttle[0]*vxError,PLIST_throttle[1],PLIST_throttle[2]*vxError)
 				u = PIDcontroller.computeControl()      # Compute Control input
 				u = self.satValues(u,0.0,1.0)           # Bound control input
@@ -156,15 +157,17 @@ class LongController(Node):
 
 			elif vxError < -1.0:
 				if abs(vxError) >= errTol:
+					print("brake",vxError)
 					PIDcontroller.setGains(PLIST_LEBrake[0]*vxError,PLIST_LEBrake[1],PLIST_LEBrake[2]*vxError)
 					u = PIDcontroller.computeControl()      # Compute Control input
 					u = self.satValues(u,0.0,1.0)           # Bound control input
 					#throttle_cmd = u               # set throttle
 					#throttle_cmd = self.lowpass(throttle_cmd,throttle_cmd_prev,0.96)
 					#throttle_cmd_prev = throttle_cmd
-					self.throttle_cmd = brakeFilter.update_filter(u)
-					self.brake_cmd = 0.0                # set brake to 0
+					self.brake_cmd = brakeFilter.update_filter(u)
+					self.throttle_cmd = 0.0                # set brake to 0
 				else:
+					print("brakel",vxError)
 					PIDcontroller.setGains(PLIST_SEBrake[0],PLIST_SEBrake[1],PLIST_SEBrake[2])
 					u = PIDcontroller.computeControl()           # Compute Control input
 					u = self.satValues(abs(u),0.0,1.0)           # Bound control input
