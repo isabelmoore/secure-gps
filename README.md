@@ -20,3 +20,22 @@ INSTRUCTIONS FOR RUNNING REAL MKZ:
 - To run controller, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:= FALSE DESIRED_SPEED:='5.0' (depends on speed you want)
 
 To verify waypoint generation/following: graph is availible when running ros2 run vehicle_control_mkz Waypoint_plotter.py 
+
+
+To switch gears in dbw mode, run ros2 topic pub /vehicle/gear_cmd dbw_ford_msgs/msg/GearCmd 'header:
+  stamp:
+    sec: 0
+    nanosec: 0
+  frame_id: '\'''\''
+cmd:
+  gear: 0
+clear: false' 
+
+gear: 0 = none 
+gear: 1 = park
+gear: 2 = reverse
+gear: 3 = neutral
+gear: 4 = drive
+gear: 5 = low 
+
+
