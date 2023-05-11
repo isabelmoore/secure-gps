@@ -9,6 +9,9 @@ INSTRUCTIONS FOR RUNNING SIMULATOR:
 - To test waypoint generation, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=TRUE and set file to /odom_waypoints.dat (in launch file)
 - To run controller, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:= FALSE DESIRED_SPEED:='5.0' (depends on speed you want)
 
+Troubleshooting simulation:
+-Check if vehicle topics publishing properly, sometimes Gazebo plugin for dataspeed sensors will not publish /vehicle/ground_truth_odom and /vehicle/gps/fix. This will cause lateral controller to be stuck in callback. Echo these topics and ensure data is publishing when launching gazebo. If not, restart gazebo or restart computer.
+
 INSTRUCTIONS FOR RUNNING REAL MKZ: 
 1) source controller ws 
 2) STARTING MTI ROS2 FILTER: in another terminal, source MTI ws (It will start with MTI)
