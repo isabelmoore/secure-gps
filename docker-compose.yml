@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  ros_humble:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mkz-container
+    image: mkz-humble:latest
+    user: user
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=${XAUTHORITY}
+      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://localhost:11311}
+      - HOST_ROS_IP=${ROS_IP}
+      - HOST_ROS_HOSTNAME=${ROS_HOSTNAME}
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      # - ROS_LOCALHOST_ONLY=1
+    volumes:
+      - ./:/home/user/MKZ_SIMULATOR_PROTOTYPE1/
+      # - /home/$USER/.ros/:/home/user/.ros/
+      # - /home/$USER/bags/:/home/user/bags/
+      - ./docker/.bashrc:/home/user/.bashrc
+    working_dir: /home/user/MKZ_SIMULATOR_PROTOTYPE1/
+    privileged: true
+    group_add:
+      - ${SHARED_GROUP:-1004}
+    network_mode: host
+    ipc: host
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    command: ["bash"]
