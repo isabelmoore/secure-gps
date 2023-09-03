@@ -8,9 +8,8 @@
   <license>TODO: License declaration</license>
   
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-  
+    <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>dbw_gazebo_mkz</build_depend>
   <build_depend>bluespace_ai_xsens_mti_driver</build_depend>
   <test_depend>ament_lint_auto</test_depend>

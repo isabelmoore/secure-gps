@@ -16,7 +16,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # DEPENDENCIES
-find_package(ament_cmake REQUIRED)
 find_package(dbw_gazebo_mkz REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
@@ -24,7 +23,7 @@ find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(dbw_ford_msgs REQUIRED)
-
+find_package(ament_cmake REQUIRED)
 #find_package(xsens_mti_ros_node)
 
 #MSG- Location of odom msg, #scripts- run odompubtest.py for odom generation 
@@ -39,11 +38,9 @@ install(DIRECTORY
 install(DIRECTORY
   config
   DESTINATION lib/${PROJECT_NAME})
-  
-
-
-# Install Python modules
-ament_python_install_package(${PROJECT_NAME})
+ 
+#Install Python Modules 
+#ament_python_install_package(${PROJECT_NAME})
  
 # Install Python executables
 install(PROGRAMS
