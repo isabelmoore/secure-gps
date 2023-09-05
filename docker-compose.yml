@@ -12,8 +12,6 @@ services:
       - DISPLAY=${DISPLAY}
       - XAUTHORITY=${XAUTHORITY}
       - ROS_MASTER_URI=${ROS_MASTER_URI:-http://localhost:11311}
-      - HOST_ROS_IP=${ROS_IP}
-      - HOST_ROS_HOSTNAME=${ROS_HOSTNAME}
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       # - ROS_LOCALHOST_ONLY=1
     volumes:
@@ -23,8 +21,8 @@ services:
       - ./docker/.bashrc:/home/user/.bashrc
     working_dir: /home/user/MKZ_SIMULATOR_PROTOTYPE1/
     privileged: true
-    group_add:
-      - ${SHARED_GROUP:-1004}
+    # group_add:
+    #   - ${SHARED_GROUP:-1004}
     network_mode: host
     ipc: host
     # deploy:
