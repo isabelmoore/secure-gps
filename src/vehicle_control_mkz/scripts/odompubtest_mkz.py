@@ -69,10 +69,10 @@ class SensorFusionNode(Node):
             self.publisher1.publish(self.odomQuat)
             self.publisher2.publish(self.odomEuler)
         
-        #### Print
-        self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
-        # self.get_logger().info("Publishing: {}".format(self.odomQuat))
-        # self.get_logger().info("Publishing: {}".format(self.odomEuler))
+            #### Print
+            self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
+            # self.get_logger().info("Publishing: {}".format(self.odomQuat))
+            # self.get_logger().info("Publishing: {}".format(self.odomEuler))
 
 
     def sim_position_cb(self, msg: NavSatFix):
@@ -92,6 +92,8 @@ class SensorFusionNode(Node):
         self.odomQuat.pose.pose.position.x = utm_pose[0]	
         self.odomQuat.pose.pose.position.y = utm_pose[1]
         self.odomQuat.pose.pose.position.z = msg.altitude
+        if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor err
+        	self.pos_flag = 0
         
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script collects waypoints and saves them to textfiles
 # Specifically, it collects gps coordinates to one file
@@ -28,7 +28,7 @@ class Collect_Waypoints(Node):
         #setting flag for pathpoint array generation after callback
         self.flag = 0
         #getting param from controllaunch.launch
-        self.declare_parameter('WAYPOINTS_FILE', '/odom_waypoints.dat')
+        self.declare_parameter('WAYPOINTS_FILE', '/follow_waypoints.dat')
         path = os.path.dirname(os.path.abspath(__file__))
         WaypointFile = self.get_parameter("WAYPOINTS_FILE").get_parameter_value().string_value
         self.filename = path + WaypointFile
@@ -49,7 +49,7 @@ class Collect_Waypoints(Node):
         self.point[1] = y
         self.pathArray.append([self.point[0], self.point[1]])
         self.i +=1
-        if self.i > 1000:
+        if self.i > 10:
             self.Waypoint_record()
         else:
             pass

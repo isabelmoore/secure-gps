@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script collects waypoints and saves them to textfiles
 # Specifically, it collects gps coordinates to one file
