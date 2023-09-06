@@ -7,7 +7,7 @@
   <xacro:include filename="$(find dataspeed_dbw_gazebo)/urdf/vehicle_gazebo.urdf.xacro" />
 
   <!-- Bolt-on sensors go here -->
-  <xacro:include filename="$(find custom_dbw_sim_examples)/urdf/vehicle_sensors.urdf.xacro" />
+  <xacro:include filename="$(find dbw_gazebo_mkz)/urdf/vehicle_sensors.urdf.xacro" />
   <xacro:dataspeed_dbw_gazebo_camera name="front_camera" parent="base_footprint" >
     <origin xyz="2.1 0 1.4" rpy="0 0.55 0" />
   </xacro:dataspeed_dbw_gazebo_camera>
