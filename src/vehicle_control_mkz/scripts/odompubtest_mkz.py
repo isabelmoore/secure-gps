@@ -7,6 +7,9 @@ from sensor_msgs.msg import NavSatFix
 from sensor_msgs.msg import Imu
 from tf_transformations import quaternion_from_euler as QOE
 from tf_transformations import euler_from_quaternion as EFQ
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Header
 import utm
 import numpy as np
 import sys
@@ -41,6 +44,7 @@ class SensorFusionNode(Node):
         if self.sim == 'SIM':
             self.subscription1 = self.create_subscription(Odometry,"/vehicle/ground_truth_odom", self.sim_orientation_cb, 1)
             self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix", self.sim_position_cb, 1)
+
         
         # For Real MKZ
         if self.sim == 'REAL':
@@ -50,11 +54,13 @@ class SensorFusionNode(Node):
         #Publish ODOM TOPICS 
         self.publisher1 = self.create_publisher(Odometry,'/vehicle/odom1',1)
         self.publisher2 = self.create_publisher(A9,'/vehicle/odom2',1)
+        self.publisher3 = self.create_publisher(Path,'/vehicle/rviz_path',1)
         
         # Define global output message variables
         self.odomQuat = Odometry()
         self.odomEuler = A9()
-        
+        self.Path = Path()
+   
         # [x, y, yaw] just for display purposes
         self.veh_pose = [0.0, 0.0, 0.0]
         
@@ -68,6 +74,7 @@ class SensorFusionNode(Node):
         if (self.pos_flag == 1) and (self.or_flag ==1): 
             self.publisher1.publish(self.odomQuat)
             self.publisher2.publish(self.odomEuler)
+            self.publisher3.publish(self.Path)
         
             #### Print
             self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
@@ -92,6 +99,14 @@ class SensorFusionNode(Node):
         self.odomQuat.pose.pose.position.x = utm_pose[0]	
         self.odomQuat.pose.pose.position.y = utm_pose[1]
         self.odomQuat.pose.pose.position.z = msg.altitude
+
+        #RVIZ Path plugin 
+        self.Path_pose = PoseStamped()
+        self.Path_pose.pose.position.x = utm_pose[0]
+        self.Path_pose.pose.position.y = utm_pose[1]
+        self.Path.header.frame_id = "base_link"
+        self.Path.poses.append(self.Path_pose)
+
         if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor err
         	self.pos_flag = 0
         
@@ -103,6 +118,7 @@ class SensorFusionNode(Node):
         self.or_flag =1
         self.odomQuat.header = msg.header
         self.odomQuat.pose.pose.orientation = msg.pose.pose.orientation
+
         
         
         # Get the euler angles from the quaternion

@@ -30,14 +30,18 @@ from vehicle_control_mkz.msg import A9
 class LongController(Node):
 	def __init__(self, sim=True, rate=50):
 		###set simulation/rate###
+		qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
+		durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
+		history=QoSHistoryPolicy.KEEP_LAST, depth=1)
 		time.sleep(1/15)
 		self.sim = sim
 		self.rate = rate
-		self.state_flag = [0,0]
+		self.odom_flag = 0
+		self.speed_flag = 0 
 		### init node##
 		super().__init__('long_controller_node')
 		#DEF SELF FLAG 
-		self.flag = 0
+		self.length_flag = 0
 		#Read YAML File from script 
 		path = os.path.dirname(os.path.abspath(__file__))
 		self.vehicle = "/config/MKZ.yaml" #yAML FILE NAME, THIS ONE IS SIMULATION FILE I BELIEVE
@@ -75,6 +79,7 @@ class LongController(Node):
 
 		### Longitudinal publishers/sub from ROS callback
 		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.__speed_cb, 1)
+		self.feedback_check = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
 		#########################
 
 		########
@@ -114,7 +119,7 @@ class LongController(Node):
 	def publish(self):
 		self.return_states()
 		###
-		if self.flag == 1:
+		if self.length_flag == 1:
 			self.throttleMsg.pedal_cmd = self.throttle_cmd
 			self.brakeMsg.pedal_cmd = self.brake_cmd
 			self.pubThrottle.publish(self.throttleMsg)
@@ -124,12 +129,12 @@ class LongController(Node):
 			pass 
 	
 	def return_states(self):
-		if self.state_flag == [1,1]:
+		if (self.odom_flag == 1) and (self.speed_flag == 1):
 			states = [self.linearX]
 			self.pubThrottle = self.create_publisher(ThrottleCmd,'/vehicle/throttle_cmd',1)
 			self.pubBrake = self.create_publisher(BrakeCmd,'/vehicle/brake_cmd',1)
 			self.publishTrue(states,self.PIDcontroller,self.errTol,self.PLIST_throttle,self.PLIST_LEBrake,self.PLIST_SEBrake,self.throttleFilter,self.brakeFilter)
-			self.flag = 1 
+			self.length_flag = 1 
 
 		else:
 			states = [0]
@@ -138,7 +143,13 @@ class LongController(Node):
 	def __speed_cb(self,msg,*args):
 		#### MKZ CASE ####
 		self.linearX = msg.twist.linear.x
-		self.state_flag = [1,1]
+		self.speed_flag = 1
+	
+	def __odom_cb(self,msg,*args):
+		#### MKZ CASE ####
+		self.linearX = msg.twist.linear.x
+		self.odom_flag = 1
+	
 
 
 	

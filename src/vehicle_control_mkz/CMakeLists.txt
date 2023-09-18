@@ -38,6 +38,12 @@ install(DIRECTORY
 install(DIRECTORY
   config
   DESTINATION lib/${PROJECT_NAME})
+  
+#for RVIZ
+#for testing YAML
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME})
  
 #Install Python Modules 
 #ament_python_install_package(${PROJECT_NAME})
@@ -64,6 +70,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
    DEPENDENCIES builtin_interfaces std_msgs
  )
 
+install(FILES 
+	msg/odom_waypoints.dat
+        DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
