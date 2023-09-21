@@ -27,6 +27,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
         ros-humble-navigation2 \
 	    ros-humble-nav2-bringup \
 	    ros-humble-turtlebot3* \
+        ros-humble-velodyne-description \
      && apt purge -y --auto-remove \
      && rm -rf /var/lib/apt/lists/*
      
@@ -34,7 +35,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 RUN pip3 install \
     numpy \
     matplotlib \
-    transforms3d
+    transforms3d \
+    utm
 
 # Create user
 RUN groupadd -g $GID $UNAME
