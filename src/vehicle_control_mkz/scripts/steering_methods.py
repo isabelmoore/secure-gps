@@ -24,6 +24,7 @@ class SteeringMethods:
         self.LA = lookAhead
         self.WB = wheelBase
         self.Sr = steeringRatio	
+
         
     #### MISC FUNCTIONS
     def satValues(self,value,satLower, satUpper):
@@ -78,11 +79,7 @@ class SteeringMethods:
         wheelBase = self.WB
         lookAhead = self.LA
         steeringRatio = self.Sr
-        print('Look ahead:',lookAhead)
-        print(self.pathArray)
-        print(pose_x,pose_y)
         diff = self.pathArray - np.array([pose_x,pose_y]) #find closest waypoint
-        print("closest waypoint:",diff)
         diffSq = diff[:,0]**2 + diff[:,1]**2
         minInd = np.argmin(diffSq)
         distList = np.sqrt(diffSq)
@@ -97,11 +94,15 @@ class SteeringMethods:
                     i = 0
         targetX = self.pathArray[targetPoint][0]
         targetY = self.pathArray[targetPoint][1]
+
         absoluteBearing = np.arctan2(targetY - pose_y, targetX - pose_x)
         #print("poses:",pose_y,pose_x,pose_y)
         relativeBearing = self.angleDiff(absoluteBearing,yaw)
         curv = 2*np.sin(relativeBearing)/distList[targetPoint]
         wpmutex.release()
         steercmd = steeringRatio*np.arctan2(wheelBase*curv,1)
-        print("method pursuit",targetPoint, minInd, distList[i], relativeBearing)
         return steercmd, curv, absoluteBearing,relativeBearing, targetPoint 
+    
+    def RVIZ_plugin(self):
+        #calling for lat control program to reduce number of loops
+        return self.pathArray

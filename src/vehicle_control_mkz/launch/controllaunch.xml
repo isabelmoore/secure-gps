@@ -23,10 +23,12 @@
 		<node pkg="vehicle_control_mkz" exec="long_control.py" name="long_control_node" output="screen">
 			<param name="DESIRED_SPEED" value="$(var DESIRED_SPEED)"/>
 		</node>
+		
 		<node pkg="vehicle_control_mkz" exec="lat_control.py" name="lat_control_node" output="screen">
 			<param name="DESIRED_SPEED" value="$(var DESIRED_SPEED)"/>
 			<param name="WAYPOINTS_FILE" value="$(var WAYPOINTS_FILE)"/>
 		</node>
+		<node pkg="vehicle_control_mkz" exec="RVIZ.py" name="RVIZ" output="screen"/>
 	</group>
 		
 	<group if="$(var IS_CP)">
@@ -38,7 +40,7 @@
 		</node>
 	</group>	
 	
-	<node pkg="rviz2" exec="rviz2" name="vehicle_position" args="-d $(find-pkg-share vehicle_control_mkz)/config/mkz.rviz" respawn="true" >
+	<node pkg="rviz2" exec="rviz2" name="vehi" args="-d $(find-pkg-share vehicle_control_mkz)/config/mkz.rviz" respawn="true" >
     <param name="use_sim_time" value="true" />
   </node>
 

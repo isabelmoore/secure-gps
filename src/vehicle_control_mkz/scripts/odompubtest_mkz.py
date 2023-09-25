@@ -16,13 +16,8 @@ import sys
 import pdb
 from rclpy.node import Node 
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,QoSDurabilityPolicy
-#from custom_msgs.msg import positionEstimate SEE DOCUMENTATION ON ROS2 FOR REAL
-#from custom_msgs.msg import orientationEstimate SEE DOCUMENTATION ON ROS2 FOR REAL
-import threading 
 
-# The sim flag is used to determine which set of subscribers and callbacks to use
-# This could be done with launch file where you load a parameter and then use that
-# But this hopefully give you an idea of how to use the parameter when you get to that point
+
 
 class SensorFusionNode(Node):
     def __init__(self, rate=50):
@@ -36,25 +31,30 @@ class SensorFusionNode(Node):
         #Starting sensor
         super().__init__('Sensor_Fusion_Node')
         
-        # Define QoS
+
+        #Uncomment this if you want to use the QOS profile for sensors: 
+        '''
         qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
                 durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
                 history=QoSHistoryPolicy.KEEP_LAST, depth=1)
-        #FOR SIM ONLY 
+        '''
+
+        #FOR SIM ONLY: Sensor topics 
         if self.sim == 'SIM':
             self.subscription1 = self.create_subscription(Odometry,"/vehicle/ground_truth_odom", self.sim_orientation_cb, 1)
             self.subscription2 = self.create_subscription(NavSatFix,"/vehicle/gps/fix", self.sim_position_cb, 1)
 
         
-        # For Real MKZ
+        # For Real MKZ: Sensor Topics 
         if self.sim == 'REAL':
             # Otherwise use another set of subscibers and callbacks
             pass
         
-        #Publish ODOM TOPICS 
-        self.publisher1 = self.create_publisher(Odometry,'/vehicle/odom1',1)
-        self.publisher2 = self.create_publisher(A9,'/vehicle/odom2',1)
-        self.publisher3 = self.create_publisher(Path,'/vehicle/rviz_path',1)
+
+        #Publish ODOM TOPICS, 1 = Odometry 
+        self.publisher_OdometryTopic = self.create_publisher(Odometry,'/vehicle/odom1',1)
+        self.publisher_msgScript = self.create_publisher(A9,'/vehicle/odom2',1)
+        self.RVIZ_plugin_travelledpath = self.create_publisher(Path,'/vehicle/rviz_path',1)
         
         # Define global output message variables
         self.odomQuat = Odometry()
@@ -72,9 +72,9 @@ class SensorFusionNode(Node):
 
         #### Publish 	
         if (self.pos_flag == 1) and (self.or_flag ==1): 
-            self.publisher1.publish(self.odomQuat)
-            self.publisher2.publish(self.odomEuler)
-            self.publisher3.publish(self.Path)
+            self.publisher_OdometryTopic.publish(self.odomQuat)
+            self.publisher_msgScript(self.odomEuler)
+            self.RVIZ_plugin_travelledpath.publish(self.Path)
         
             #### Print
             self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
@@ -104,7 +104,8 @@ class SensorFusionNode(Node):
         self.Path_pose = PoseStamped()
         self.Path_pose.pose.position.x = utm_pose[0]
         self.Path_pose.pose.position.y = utm_pose[1]
-        self.Path.header.frame_id = "base_link"
+        self.header = Header()
+        self.Path.header.frame_id = "world"
         self.Path.poses.append(self.Path_pose)
 
         if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor err
@@ -115,7 +116,7 @@ class SensorFusionNode(Node):
 
     def sim_orientation_cb(self, msg: Odometry):
         # Fill in the quaternion message
-        self.or_flag =1
+        self.or_flag =1 # Set flag to prevent publish without sensor feedback
         self.odomQuat.header = msg.header
         self.odomQuat.pose.pose.orientation = msg.pose.pose.orientation
 
@@ -132,30 +133,6 @@ class SensorFusionNode(Node):
      
         # Fill in display print display variable
         self.veh_pose[2] = euler[2]
-    
-    # This is kennys prior method for converting the quaternion to euler in my format
-    # def sim_orientation_cb(self, msg: Imu):
-    #     # The IMU message already has a quaternion and the output of this node is also a quaternion
-    #     # Instead you could just do this:
-    #     # self.odomQuat.pose.pose.orientation = msg.orientation
-    #     # And if you need to know yaw for some reason you can still get it from the quaternion
-        
-    #     # Convert from NED to ENU
-    #     yaw = np.mod(2*np.pi + np.pi/2 - np.radians(msg.orientation.w),2*np.pi)
-        
-    #     # Convert to quaternion
-    #     q=QOE(0.0, 0.0, yaw)
-        
-    #     # Place into message
-    #     self.odomQuat.header = msg.header
-    #     self.odomQuat.pose.pose.orientation.x = q[0]
-    #     self.odomQuat.pose.pose.orientation.y = q[1]
-    #     self.odomQuat.pose.pose.orientation.z = q[2]
-    #     self.odomQuat.pose.pose.orientation.w = q[3]
-        
-    #     self.odomEuler.roll = 0.0
-    #     self.odomEuler.pitch = 0.0
-    #     self.odomEuler.yaw = yaw
 
 def main(args=None):
     rclpy.init(args=args)

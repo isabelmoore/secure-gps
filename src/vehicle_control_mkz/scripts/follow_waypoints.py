@@ -55,7 +55,8 @@ class Collect_Waypoints(Node):
             pass
 
     def service_callback(self):
-        self.get_logger().info('Waypoint_generation recieved,recording...')
+        #self.get_logger().info('Waypoint_generation recieved,recording...')
+        pass
     
     def Waypoint_record(self):
         with open(self.filename, 'w') as file:

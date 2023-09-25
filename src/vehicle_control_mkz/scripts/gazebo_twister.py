@@ -4,6 +4,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Empty
 
+# Use this program to send the vehicle on a controlled path for waypoint collection 
+#In sim, uncomment twist commands to send the vehicle in a circle
 class ROS2Twist(Node):
     def __init__(self) -> None:
         super().__init__('multi_car_cmd')

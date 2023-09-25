@@ -30,18 +30,14 @@ from vehicle_control_mkz.msg import A9
 class LongController(Node):
 	def __init__(self, sim=True, rate=50):
 		###set simulation/rate###
-		qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
-		durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
-		history=QoSHistoryPolicy.KEEP_LAST, depth=1)
 		time.sleep(1/15)
 		self.sim = sim
 		self.rate = rate
-		self.odom_flag = 0
-		self.speed_flag = 0 
+		self.state_flag = [0,0]
 		### init node##
 		super().__init__('long_controller_node')
 		#DEF SELF FLAG 
-		self.length_flag = 0
+		self.flag = 0
 		#Read YAML File from script 
 		path = os.path.dirname(os.path.abspath(__file__))
 		self.vehicle = "/config/MKZ.yaml" #yAML FILE NAME, THIS ONE IS SIMULATION FILE I BELIEVE
@@ -79,7 +75,6 @@ class LongController(Node):
 
 		### Longitudinal publishers/sub from ROS callback
 		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.__speed_cb, 1)
-		self.feedback_check = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
 		#########################
 
 		########
@@ -119,22 +114,22 @@ class LongController(Node):
 	def publish(self):
 		self.return_states()
 		###
-		if self.length_flag == 1:
+		if self.flag == 1:
 			self.throttleMsg.pedal_cmd = self.throttle_cmd
 			self.brakeMsg.pedal_cmd = self.brake_cmd
 			self.pubThrottle.publish(self.throttleMsg)
 			self.pubBrake.publish(self.brakeMsg)
-			self.get_logger().info("Publishing Longitudinal Controller")
+			#self.get_logger().info("Publishing Longitudinal Controller")
 		else:
 			pass 
 	
 	def return_states(self):
-		if (self.odom_flag == 1) and (self.speed_flag == 1):
+		if self.state_flag == [1,1]:
 			states = [self.linearX]
 			self.pubThrottle = self.create_publisher(ThrottleCmd,'/vehicle/throttle_cmd',1)
 			self.pubBrake = self.create_publisher(BrakeCmd,'/vehicle/brake_cmd',1)
 			self.publishTrue(states,self.PIDcontroller,self.errTol,self.PLIST_throttle,self.PLIST_LEBrake,self.PLIST_SEBrake,self.throttleFilter,self.brakeFilter)
-			self.length_flag = 1 
+			self.flag = 1 
 
 		else:
 			states = [0]
@@ -143,13 +138,7 @@ class LongController(Node):
 	def __speed_cb(self,msg,*args):
 		#### MKZ CASE ####
 		self.linearX = msg.twist.linear.x
-		self.speed_flag = 1
-	
-	def __odom_cb(self,msg,*args):
-		#### MKZ CASE ####
-		self.linearX = msg.twist.linear.x
-		self.odom_flag = 1
-	
+		self.state_flag = [1,1]
 
 
 	
@@ -158,7 +147,6 @@ class LongController(Node):
 			vxError = self.vx_desired - states[0]
 			PIDcontroller.update(vxError)
 			if vxError >= -1.0:   
-				print("throttle",vxError)
 				PIDcontroller.setGains(PLIST_throttle[0]*vxError,PLIST_throttle[1],PLIST_throttle[2]*vxError)
 				u = PIDcontroller.computeControl()      # Compute Control input
 				u = self.satValues(u,0.0,1.0)           # Bound control input
@@ -168,7 +156,6 @@ class LongController(Node):
 
 			elif vxError < -1.0:
 				if abs(vxError) >= errTol:
-					print("brake",vxError)
 					PIDcontroller.setGains(PLIST_LEBrake[0]*vxError,PLIST_LEBrake[1],PLIST_LEBrake[2]*vxError)
 					u = PIDcontroller.computeControl()      # Compute Control input
 					u = self.satValues(u,0.0,1.0)           # Bound control input
@@ -178,7 +165,6 @@ class LongController(Node):
 					self.brake_cmd = brakeFilter.update_filter(u)
 					self.throttle_cmd = 0.0                # set brake to 0
 				else:
-					print("brakel",vxError)
 					PIDcontroller.setGains(PLIST_SEBrake[0],PLIST_SEBrake[1],PLIST_SEBrake[2])
 					u = PIDcontroller.computeControl()           # Compute Control input
 					u = self.satValues(abs(u),0.0,1.0)           # Bound control input
@@ -192,7 +178,7 @@ class LongController(Node):
 		
 
 				####  MESSAGES FOR DEBUG
-			print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,states[0],self.throttle_cmd,self.brake_cmd,PIDcontroller.errorTotalReturn()))
+			#print("\n speed cmd: {} \n speed: {} \n throttle: {} \n brake: {} \n totalError: {}".format(self.vx_desired,states[0],self.throttle_cmd,self.brake_cmd,PIDcontroller.errorTotalReturn()))
 
 	def satValues(self,value,satLower, satUpper):
 

@@ -61,6 +61,7 @@ install(PROGRAMS
   scripts/gazebo_twister.py
   scripts/Waypoint_plotter.py
   scripts/follow_waypoints.py
+  scripts/RVIZ.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -69,10 +70,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/A9.msg"
    DEPENDENCIES builtin_interfaces std_msgs
  )
-
-install(FILES 
-	msg/odom_waypoints.dat
-        DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

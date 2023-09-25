@@ -4,11 +4,16 @@ from rclpy.node import Node
 from steering_methods import SteeringMethods
 from dbw_ford_msgs.msg import SteeringCmd
 from vehicle_control_mkz.msg import A9
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import TwistStamped, PoseStamped
+from nav_msgs.msg import Path
+from std_msgs.msg import Header
 import yaml
 import os
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,QoSDurabilityPolicy
+# FOR RVIZ Display
 
+from visualization_msgs.msg import Marker
+from std_msgs.msg import Header
 
 #### TO CHANGE ROS WORKING DIRECTORY
 #### export ROS_HOME=$HOME 
@@ -65,12 +70,13 @@ class LatController(Node):
 		self.steeringFF = SteeringMethods(self.wpfile,lookAhead,wheelBase,steeringRatio)
 		#subscribers
 		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
-		self.subspeed = self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,qs)
+		self.subspeed =self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,qs)
 		#####
 		states = [0]
 		#TIMER
 		self.flag= 0
 		self.timer = self.create_timer(1/self.rate, self.publish)
+
 
 
 	def return_states(self):
@@ -94,7 +100,6 @@ class LatController(Node):
 
 
 	def __odom_cb(self,msg):
-		print("odom_cb")
 		self.pose_x = msg.x#msg.pose.pose.position.x
 		self.pose_y = msg.y#msg.pose.pose.position.y
 		#quat = msg.pose.pose.orientation
@@ -105,7 +110,6 @@ class LatController(Node):
 		self.cb_flag[0] = 1
 	
 	def lat_speed_cb(self,msg):
-		print("lat_speed_cb")
 		self.linearX = msg.twist.linear.x
 		self.cb_flag[1] = 1 
 	
