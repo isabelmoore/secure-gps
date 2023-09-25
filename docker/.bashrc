@@ -122,8 +122,10 @@ alias build='cd ~/MKZ_SIMULATOR_PROTOTYPE1 && colcon build --symlink-install'
 alias sim='ros2 launch dbw_gazebo_mkz Gazebo_mkz_initialize_launch.xml'
 alias odompub='ros2 run vehicle_control_mkz odompubtest.py'
 
-alias record='ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=TRUE and set file to /odom_waypoints.dat'
-alias run='run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:= FALSE DESIRED_SPEED:="5.0"'
+alias record='ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=TRUE'
+alias dbw='ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=FALSE DESIRED_SPEED:="5.0"'
+
+alias basesim='ros2 launch dataspeed_dbw_gazebo dataspeed_dbw_gazebo.launch.xml'
 
 # Source workspace, then gazebo
 sc
