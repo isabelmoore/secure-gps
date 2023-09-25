@@ -73,7 +73,7 @@ class SensorFusionNode(Node):
         #### Publish 	
         if (self.pos_flag == 1) and (self.or_flag ==1): 
             self.publisher_OdometryTopic.publish(self.odomQuat)
-            self.publisher_msgScript(self.odomEuler)
+            self.publisher_msgScript.publish(self.odomEuler)
             self.RVIZ_plugin_travelledpath.publish(self.Path)
         
             #### Print
@@ -108,7 +108,7 @@ class SensorFusionNode(Node):
         self.Path.header.frame_id = "world"
         self.Path.poses.append(self.Path_pose)
 
-        if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor err
+        if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor timeout- preventing lat from publishing if no feedback is recieved 
         	self.pos_flag = 0
         
 
