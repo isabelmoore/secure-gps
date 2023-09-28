@@ -1,33 +1,43 @@
 #!/usr/bin/env python3
+
+#ROS2 TOPICS 
 import rclpy
 from rclpy.node import Node
+
+#Steering methods import for vehicle POS 
 from steering_methods import SteeringMethods
 from dbw_ford_msgs.msg import SteeringCmd
+
+#Msg topic for Waypoints 
 from vehicle_control_mkz.msg import A9
+
+#topics for RVIZ plugins 
 from geometry_msgs.msg import TwistStamped, PoseStamped
 from nav_msgs.msg import Path
 from std_msgs.msg import Header
+
+#Path working directory 
 import yaml
 import os
+
+#QOS 
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,QoSDurabilityPolicy
 # FOR RVIZ Display
 
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header
 
-#### TO CHANGE ROS WORKING DIRECTORY
-#### export ROS_HOME=$HOME 
-#### CHANGE IN package.xml file
 
-#### USAGE
-#    SIMPLY IMPORT OR CREATE AN INSTACE OF CLASS LongController
-#    or run it 
 
 class LatController(Node):
 	def __init__(self,sim=True,rate=50):
+		'''
+		Uncomment this if you want to use the QOS profile for sensor topics 
 		qs= QoSProfile(reliability=QoSReliabilityPolicy.RELIABLE, 
 		 durability=QoSDurabilityPolicy.SYSTEM_DEFAULT,
 		 history=QoSHistoryPolicy.KEEP_LAST, depth=1)
+		'''
+	
 		self.sim = sim
 		self.rate = rate
 		### init node##
@@ -61,6 +71,13 @@ class LatController(Node):
 		self.gamma = data_loaded['Adaptive']['gamma']
 		self.ayLim = data_loaded['Adaptive']['ayLim']
 
+		#Global var for RVIZ path
+		self.RVIZ_Path = Path()
+		self.PoseStampedMsg = PoseStamped()
+
+		#Publish msg 
+		self.publisher_RVIZ1 = self.create_publisher(Path, '/vehicle/desired_rviz_path', 1)
+
 		#args
 		self.steeringMsg = SteeringCmd()
 		self.steeringMsg.enable = True
@@ -68,14 +85,27 @@ class LatController(Node):
 
 		#Get steering angle
 		self.steeringFF = SteeringMethods(self.wpfile,lookAhead,wheelBase,steeringRatio)
+		self.get_logger().info("Before")
+		self.path_array = self.steeringFF.RVIZ_plugin()
+		self.get_logger().info("After")
+
+		#Get desired RVIZ path 
+		self.Waypoint_plotter_rviz()
+
 		#subscribers
-		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,qs)
-		self.subspeed =self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,qs)
-		#####
+		self.subOdom = self.create_subscription(A9,'/vehicle/odom2',self.__odom_cb,1)
+		self.subspeed =self.create_subscription(TwistStamped,"/vehicle/twist",self.lat_speed_cb,1)
+
+		##Flags to prevent publishing until sensor feedback is met###
 		states = [0]
-		#TIMER
 		self.flag= 0
+		#def rate for publish
 		self.timer = self.create_timer(1/self.rate, self.publish)
+	
+	
+
+
+
 
 
 
@@ -100,6 +130,7 @@ class LatController(Node):
 
 
 	def __odom_cb(self,msg):
+
 		self.pose_x = msg.x#msg.pose.pose.position.x
 		self.pose_y = msg.y#msg.pose.pose.position.y
 		#quat = msg.pose.pose.orientation
@@ -116,26 +147,24 @@ class LatController(Node):
 
 	def publish(self):
 			self.return_states()
-
 			###
 			if self.flag == 1:
 				self.steeringMsg.steering_wheel_angle_cmd = self.steercmd_f
 				self.pubSteer.publish(self.steeringMsg)	
+				self.publisher_RVIZ1.publish(self.RVIZ_Path)
 				#self.get_logger().info("Publishing Lateral Controller")
-			else:
-				pass 
+
 
 	def steering(self,states,steeringFF):
 		#Steering Angle
 		self.steercmd,self.curv,self.absoluteBearing,self.relativeBearing,self.targetPoint = steeringFF.methodPurePursuit(states[1],states[2],states[3])
-		#Look Ahead
-		#Var Speed
-		
+		#get waypoints from Steering methods script
 		#self.vCmd = steeringFF.methodAdaptiveVelocity(vMin, vMax, ayLim, curv)
 		steeringFF.methodAdaptiveLookAhead(self.lMin, self.lMax, self.gamma, states[1], states[2], states[3], states[0], self.curv)
 		#limit steer angle 
 		self.steercmd_f = self.sat_limit(self.steercmd,self.steerLim_lower,self.steerLim_upper)
-		print("\n SteerCmd: {} \n Curv: {}".format(self.steercmd_f, self.curv))
+		#print("\n SteerCmd: {} \n Curv: {}".format(self.steercmd_f, self.curv)) uncomment for debugging 
+
 
 	def sat_limit(self,val,low,upper):
 		#steering angle control params
@@ -145,6 +174,20 @@ class LatController(Node):
 			return low
 		else:
 			return val
+		
+	def Waypoint_plotter_rviz(self):
+		for i in range(len(self.path_array) - 1):
+			self.header = Header()
+			self.RVIZ_Path.header.frame_id = "world"
+			#self.RVIZ_Path.poses = []
+			self.PoseStampedMsg.pose.position.x = float(self.path_array[i][0])
+			self.PoseStampedMsg.pose.position.y = float(self.path_array[i][1])
+			self.PoseStampedMsg.header.frame_id = "world"
+			self.RVIZ_Path.poses.append(self.PoseStampedMsg)
+			i += 10
+		self.get_logger().info("Complete")
+
+	
 
 def main(args=None):
 	rclpy.init(args=args)

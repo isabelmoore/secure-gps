@@ -77,7 +77,7 @@ class SensorFusionNode(Node):
             self.RVIZ_plugin_travelledpath.publish(self.Path)
         
             #### Print
-            self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
+            #self.get_logger().info("Publishing: {} (x,y,yaw)".format(self.veh_pose))
             # self.get_logger().info("Publishing: {}".format(self.odomQuat))
             # self.get_logger().info("Publishing: {}".format(self.odomEuler))
 
@@ -102,10 +102,11 @@ class SensorFusionNode(Node):
 
         #RVIZ Path plugin 
         self.Path_pose = PoseStamped()
+        self.Path.header.frame_id = "world"
         self.Path_pose.pose.position.x = utm_pose[0]
         self.Path_pose.pose.position.y = utm_pose[1]
         self.header = Header()
-        self.Path.header.frame_id = "world"
+        self.Path_pose.header.frame_id = "world"
         self.Path.poses.append(self.Path_pose)
 
         if (msg.latitude == 0) or (msg.longitude == 0): #avoiding sensor timeout- preventing lat from publishing if no feedback is recieved 

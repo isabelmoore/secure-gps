@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from geometry_msgs.msg import TwistStamped, PoseStamped
+
 from nav_msgs.msg import Path
 import os
 import numpy as np 
@@ -10,7 +10,7 @@ from rclpy.node import Node
 from steering_methods import SteeringMethods
 
 from vehicle_control_mkz.msg import A9
-
+'''
 class RVIZ_Plugin(Node):
     def __init__(self,rate=50):
         super().__init__('RVIZ')
@@ -34,8 +34,14 @@ class RVIZ_Plugin(Node):
         self.path_array = np.array([[float(y) for y in x] for x in self.path_array])
 
         # Def Publisher 
+
         # Create publisher for RVIZ disp 
         self.RVIZ_Path = Path()
+        self.PoseStampedMsg = PoseStamped()
+        ##
+
+        self.RVIZ_Path.poses.append()
+
         self.publisher_RVIZ1 = self.create_publisher(Path, '/vehicle/desired_rviz_path', 1)
 
         
@@ -44,7 +50,8 @@ class RVIZ_Plugin(Node):
         # This is for showing the full path on RVIZ 
         self.SM = SteeringMethods(self.wpfile)
         self.path_array = self.SM.RVIZ_plugin()
-        self.poses = PoseStamped()
+        self.poses = PoseArray()
+
 
         # TODO
         if self.i > (len(self.path_array) - 1):
@@ -55,9 +62,9 @@ class RVIZ_Plugin(Node):
             self.poses.pose.position.x = float(self.path_array[self.i][0])
             self.poses.pose.position.y = float(self.path_array[self.i][1])
 
-        self.Header = Header()
-        self.RVIZ_Path.header.frame_id = "world"
-        self.RVIZ_Path.poses.append(self.poses)
+            self.Header = Header()
+            self.RVIZ_Path.header.frame_id = "world"
+            self.RVIZ_Path.poses.append(self.poses)
 
     def publish(self):
         self.waypoint_store_RVIZ()
@@ -74,3 +81,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+'''
