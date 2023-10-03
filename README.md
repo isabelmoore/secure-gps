@@ -1,44 +1,35 @@
-#MKZ CONTROLLER 
-MKZ ROS2 communication as of Spring 2023, Translation of MKZ waypoint controller from https://github.com/Kchour/MKZ_controller/tree/controllers/vehicle_controllers
-
-INSTRUCTIONS FOR RUNNING SIMULATOR: 
-1) source ws 
-2) source Gazebo (. /usr/share/gazebo-11/setup.bash), run Gazebo sim (ros2 launch dbw_gazebo_mkz Gazebo_mkz_initialize_launch.xml)
-3) ros2 run vehicle_control_mkz odompubtest.py 
-5) Run controllers>
-- To test waypoint generation, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=TRUE and set file to /odom_waypoints.dat (in launch file)
-- To run controller, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:= FALSE DESIRED_SPEED:='5.0' (depends on speed you want)
-
-Troubleshooting simulation:
--Check if vehicle topics publishing properly, sometimes Gazebo plugin for dataspeed sensors will not publish /vehicle/ground_truth_odom and /vehicle/gps/fix. This will cause lateral controller to be stuck in callback. Echo these topics and ensure data is publishing when launching gazebo. If not, restart gazebo or restart computer.
-
-INSTRUCTIONS FOR RUNNING REAL MKZ: 
-1) source controller ws 
-2) STARTING MTI ROS2 FILTER: in another terminal, source MTI ws (It will start with MTI)
-3) ros2 launch bluespace_ai_xsens_mti_driver xsens_mti_node.launch.py 
-4) run dbw (ros2 launch dbw_ford_can dbw.launch.xml)
-6) For time being, to start vehicle in dbw mode, run ros2 topic pub /vehicle/enable std_msgs/msg/Empty '{}'  (TROUBLESHOOT WHY UP/DOWN CONTROLS NOT STARTING DBW ON MKZ) 
-7) In controller ws, Run controllers>
-- To test waypoint generation, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:=TRUE and set file to /odom_waypoints.dat (in launch file)
-- To run controller, run ros2 launch vehicle_control_mkz controllaunch.xml IS_CP:= FALSE DESIRED_SPEED:='5.0' (depends on speed you want)
-
-To verify waypoint generation/following: graph is availible when running ros2 run vehicle_control_mkz Waypoint_plotter.py 
+# MKZ CONTROLLER 
+This is a workspace repository integrated with docker which is made for path recording and following for a Dataspeed Lincoln MKZ. This codebase was translated into ros2 based on https://github.com/Kchour/MKZ_controller/tree/controllers/vehicle_controllers
 
 
-To switch gears in dbw mode, run ros2 topic pub /vehicle/gear_cmd dbw_ford_msgs/msg/GearCmd 'header:
-  stamp:
-    sec: 0
-    nanosec: 0
-  frame_id: '\'''\''
-cmd:
-  gear: 0
-clear: false' 
+## Initializing the repository
+The repository is integrated with docker and it's use is highly recommended. Should docker not be utilized, the instructions contained in the [Dockerfile](/Dockerfile) can be utilized from a base install of ROS 2 Humble on Ubuntu 22.04.
 
-gear: 0 = none 
-gear: 1 = park
-gear: 2 = reverse
-gear: 3 = neutral
-gear: 4 = drive
-gear: 5 = low 
+If using docker then any distribution of linux can be utilized in addition to Windows with a little extra setup (instructions to be added later)
 
+Assuming that docker is installed, the following steps can be taken to initialize the repository.
+1. Clone:
+   * `git clone https://github.com/LizFile01/MKZ_SIMULATOR_PROTYPE1`
+2. Cd into folder:
+   * `cd MKZ_SIMULATOR_PROTYPE1`
+3. Build the docker image: 
+   * `docker compose build`
+4. Add the container running alias to your `.bashrc` with this command :
+   * `echo "alias mkz='docker compose -f ~/MKZ_SIMULATOR_PROTYPE1/docker-compose.yml run --rm ros_humble'" >> ~/.bashrc`
+   * NOTE: Path will need to be changed if not using home folder for repository
+5. Source your `.bashrc` file to utilize new alias
+   * `. ~/.bashrc`
+   * Or just open a new terminal
+6. Open a container within your terminal using the `mkz` alias
+   * The rest of the instructions will assume that you are within an MKZ container
+7. Once in the container run the `build` command (defined by below alias) to build the ROS 2 workspace
 
+## Running
+
+The following aliases are already within the `.bashrc` file ready for you to use:
+* `sc` sources the workspace, this is also done automatically upon entering the container
+* `sim` runs the simulation
+* `record` runs the waypoint recorder and listens on the `/vehicle/twist_cmd` topic for commands to manually control the vehicle
+* `teleop` runs the `teleop_twist_keyboard` node and allows you to control the MKZ when already running `record` in another terminal
+* `teleop_gui` instead utilizes `rqt_teleop` for a graphical version of teleop (seems to be fairly buggy)
+* `control` runs the lateral and longitudinal controllers and follows the recorded path
