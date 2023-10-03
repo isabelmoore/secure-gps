@@ -28,6 +28,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 	    ros-humble-nav2-bringup \
 	    ros-humble-turtlebot3* \
         ros-humble-velodyne-description \
+        ros-humble-plotjuggler \
      && apt purge -y --auto-remove \
      && rm -rf /var/lib/apt/lists/*
      

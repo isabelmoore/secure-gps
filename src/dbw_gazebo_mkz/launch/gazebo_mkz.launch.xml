@@ -13,7 +13,7 @@
 
   </include>  
 
-  <include file="$(find-pkg-share dbw_gazebo_mkz)/launch/generic_dbw_mkz.launch.xml" >
+  <include file="$(find-pkg-share dbw_gazebo_mkz)/launch/generic_dataspeed_dbw.launch.xml" >
     <arg name="vehicle_name" value="vehicle" />
     <arg name="vehicle_type" value="$(var model)" />
   </include>
@@ -22,8 +22,4 @@
 
   
 </launch>
-
-
-
-
 
