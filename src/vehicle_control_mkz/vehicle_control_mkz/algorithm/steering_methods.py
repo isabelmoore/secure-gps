@@ -23,6 +23,8 @@ class SteeringMethods:
         
         # Create a mutex lock to ensure that the path is not updated while it is being used
         self.mutex_lock = Lock()
+        
+        self.i = 0
 
     # Reads in path from file into array
     def read_path(self, filename):
@@ -101,8 +103,10 @@ class SteeringMethods:
         minInd = np.argmin(diffSq)
         distList = np.sqrt(diffSq)
         
+        # Start with the closest point and find the point that is the lookahead distance away
         i = minInd
-        while i>=0:
+        iter = 0 # Track number of iterations to prevent infinite loop
+        while iter<=len(self.path_array):
             if distList[i] >= self.look_ahead_distance:
                 targetPoint = i
                 break
@@ -110,6 +114,12 @@ class SteeringMethods:
                 i += 1
                 if i > len(self.path_array) - 1:
                     i = 0
+            iter += 1
+            
+        # If we didn't find a point, just use the last point
+        if iter > len(self.path_array):
+            targetPoint = len(self.path_array) - 1
+        
         targetX = self.path_array[targetPoint][0]
         targetY = self.path_array[targetPoint][1]
 
@@ -121,7 +131,7 @@ class SteeringMethods:
         self.mutex_lock.release()
         steercmd = self.steering_ratio * np.arctan2(self.wheelbase * curv, 1)
         
-        return steercmd, curv, absoluteBearing,relativeBearing, targetPoint 
+        return steercmd, curv, absoluteBearing, relativeBearing, targetPoint 
 
 
     def get_path(self):

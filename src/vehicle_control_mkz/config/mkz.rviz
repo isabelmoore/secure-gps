@@ -6,10 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Vehicle Path1
         - /Vehicle Path1/Offset1
-        - /Desired Path1
         - /Desired Path1/Topic1
+        - /Target Point Display1/Status1
       Splitter Ratio: 0.5
     Tree Height: 699
   - Class: rviz_common/Selection
@@ -166,6 +165,19 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /vehicle/desired_path
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Target Point Display
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vehicle/target_point
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -244,4 +256,4 @@ Window Geometry:
     collapsed: false
   Width: 1770
   X: 2905
-  Y: 461
+  Y: 671

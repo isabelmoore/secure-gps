@@ -77,10 +77,6 @@ class LatController(Node):
         self.gamma = data_loaded['Adaptive']['gamma']
         self.ay_lim = data_loaded['Adaptive']['ayLim']
   
-        # Initialize vehicle interface (main publishers and subscribers for vehicle control)
-        # This object allows contains the vehicle state and allows for publishing control commands
-        self.vehicle = ROSInterfaceMKZ(self, lateral_control=True) # TODO: make this not hardcoded to MKZ
-  
         # Check if path file is valid
         try:
             open(waypoints_file_path, 'r')
@@ -110,19 +106,27 @@ class LatController(Node):
         self.path_msg = Path()
         self.path_msg.header.frame_id = "world"
         
-        # Intermediate PoseStamped message, for path message
-        self.pose_msg = PoseStamped()
-        self.pose_msg.header.frame_id = "world"
-        
         # Target point display message
         self.tp_marker_msg = Marker()
         self.tp_marker_msg.header.frame_id = "world"
         self.tp_marker_msg.type = Marker.SPHERE
+        self.tp_marker_msg.action = Marker.ADD
+        self.tp_marker_msg.scale.x = 1.0
+        self.tp_marker_msg.scale.y = 1.0
+        self.tp_marker_msg.scale.z = 1.0
+        self.tp_marker_msg.color.a = 1.0
+        self.tp_marker_msg.color.r = 1.0
+        self.tp_marker_msg.color.g = 0.0
+        self.tp_marker_msg.color.b = 0.0
+        
+        
+        # Initialize vehicle interface (main publishers and subscribers for vehicle control)
+        # This object allows contains the vehicle state and allows for publishing control commands
+        self.vehicle = ROSInterfaceMKZ(self, lateral_control=True) # TODO: make this not hardcoded to MKZ
 
         # Create timers for control loop and desired path publishing
         self.control_loop_timer = self.create_timer(1/control_rate, self.control_loop)
         self.path_publish_timer = self.create_timer(1/path_publish_rate, self.publish_path)
-
 
     def control_loop(self):
         # Check if state is available
@@ -141,13 +145,18 @@ class LatController(Node):
             state = self.vehicle.get_state()
 
             # Update lookahead distance for pure pursuit (currently velocity + 1)
-            self.steering.update_lookahead(state['x'])
+            self.steering.update_lookahead(state['v'])
             
             steercmd, curv, absolute_bearing, relative_bearing, target_point = (
                 self.steering.method_pure_pursuit(state['x'], state['y'], state['yaw']))
             
             # Calculate desired velocity for longitudinal controller
             vel_cmd = self.steering.method_adaptive_velocity(self.vel_min, self.vel_max, self.ay_lim, curv)
+            
+            # If the target point is the final element of the path array, we have reached the end of the path
+            if target_point == len(self.steering.path_array) - 1:
+                self.get_logger().info("Reached end of path", throttle_duration_sec=1)
+                vel_cmd = 0.0
             
             # Limit steer angle for vehicle
             steercmd_final = sat_values(steercmd, self.steer_lim_lower, self.steer_lim_upper)
@@ -165,19 +174,35 @@ class LatController(Node):
             self.tp_marker_msg.pose.position.y = self.steering.path_array[target_point][1]
             self.target_point_publisher.publish(self.tp_marker_msg)
             
+            # Convert absolute bearing to degrees
+            absolute_bearing_deg = absolute_bearing * 180 / 3.14159
+            self.get_logger().info('Steering Angle: ' + str(round(steercmd_final, 2)) + ' Desired Heading: ' + str(round(absolute_bearing_deg, 2)), throttle_duration_sec=2)
+            
 
     # If path is available publish topic to RVIZ for display
     def publish_path(self):
-        # If path is available
-        if self.steering.got_path:
-            # Loop through and add points to path message
-            for point in self.steering.path_array:
-                self.pose_msg.pose.position.x = float(point[0])
-                self.pose_msg.pose.position.y = float(point[1])
-                self.path_msg.poses.append(self.pose_msg)
-                
-            # Publish path message
-            self.path_publisher.publish(self.path_msg)
+        # Return if path is not yet available
+        if not self.steering.got_path:
+            return
+        
+        # Hopefully okay assumption that if the pose length is the same as the the path length, this is the same path
+        if len(self.path_msg.poses) == len(self.steering.path_array):
+            self.path_publisher.publish(self.path_msg) # Just publish the same path again
+            return
+        
+        # Since this is a new path, format it into a message and publish
+        # Loop through and add points to path message
+        for point in self.steering.path_array:
+            # Intermediate PoseStamped message, for path message
+            pose_msg = PoseStamped()
+            pose_msg.header.frame_id = "world"
+            
+            pose_msg.pose.position.x = float(point[0])
+            pose_msg.pose.position.y = float(point[1])
+            self.path_msg.poses.append(pose_msg)
+            
+        # Publish path message
+        self.path_publisher.publish(self.path_msg)
 
 
 def main(args=None):

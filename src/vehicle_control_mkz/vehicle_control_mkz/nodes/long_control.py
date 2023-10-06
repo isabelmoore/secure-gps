@@ -78,18 +78,18 @@ class LongController(Node):
         self.brake_filter = LinearFilter(0.05,[1,-0.95])
         # TODO: figure out or remove hardcoded values above
   
+        # Desired steering angle when forward steering is enabled
+        self.steering_desired = None
+        
+        # Velocity desired from the lateral controller
+        self.vx_desired = None
+        
         # Initilize vehicle interface (main publishers and subscribers for vehicle control)
         # This object allows contains the vehicle state and allows for publishing control commands
         if not self.forward_steering: # If not forwarding steering, initialize with just longitudinal control
             self.vehicle = ROSInterfaceMKZ(self, longitudinal_control=True) # TODO: make this not hardcoded to MKZ
         else: # If forwarding steering, initialize with both lateral and longitudinal control
             self.vehicle = ROSInterfaceMKZ(self, lateral_control=True, longitudinal_control=True) # TODO: make this not hardcoded to MKZ
-        
-        # Desired steering angle when forward steering is enabled
-        self.steering_desired = None
-        
-        # Velocity desired from the lateral controller
-        self.vx_desired = None
         
         # Subscribe to twist setpoints from the lateral controller
         self.create_subscription(Twist, '/vehicle/twist_cmd', self.twist_callback, 1)
@@ -114,7 +114,7 @@ class LongController(Node):
         # Update setpoint with vehicle object and set error for pid controller
         vx_error = self.vx_desired - self.vehicle.state['v']
         self.pid.update(vx_error)
-        self.get_logger().info("Velocity Setpoint: " + str(self.vx_desired) + " Velocity: " + str(self.vehicle.state['v']), throttle_duration_sec=1)
+        self.get_logger().info("Velocity Setpoint: " + str(round(self.vx_desired)) + " Velocity: " + str(round(self.vehicle.state['v'], 1)), throttle_duration_sec=2)
   
         # Throttle block
         if vx_error >= -1.0:   
