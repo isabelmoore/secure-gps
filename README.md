@@ -4,6 +4,8 @@ This is a workspace repository integrated with docker which is made for path rec
 ## Important Preface
 The `docker-compose.yml` file may need slight revisions based on your platform (windows/linux). There are comments within the file denoting these required changes. However, the [docker-setup](https://github.com/tamu-edu-students/docker-setup) repository WIKI has more information on why this is needed in its "Important Preface" section. **IMPORTANT:** If you run into any issues this is likely the reason.
 
+If using Windows, make sure to run the following commands for setup from within WSL.
+
 ## Initializing the repository
 The repository is integrated with docker and it's use is highly recommended. Should docker not be utilized, the instructions contained in the [Dockerfile](/Dockerfile) can be utilized from a base install of ROS 2 Humble on Ubuntu 22.04.
 
