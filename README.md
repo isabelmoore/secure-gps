@@ -13,7 +13,7 @@ If using docker then any distribution of linux can be utilized in addition to Wi
 
 Assuming that docker is installed, the following steps can be taken to initialize the repository.
 1. Clone:
-   * `git clone https://github.com/LizFile01/MKZ_SIMULATOR_PROTYPE1`
+   * `git clone https://github.com/tamu-edu-students/MKZ_SIMULATOR_PROTYPE1.git`
 2. Cd into folder:
    * `cd MKZ_SIMULATOR_PROTYPE1`
 3. Build the docker image: 
