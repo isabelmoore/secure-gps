@@ -13,24 +13,37 @@ services:
       # - DISPLAY=${DISPLAY}
       # - XAUTHORITY=${XAUTHORITY} # not sure if this is actually needed
 
-      # Windows 10/11 with vcxsrv (installed with chocolatey)
-      - DISPLAY=192.168.4.21:0.0  # Ip address of vEthernet (WSL) interface when doing "ipconfig" in cmd
+      # Windows 10/11 using WSLg (part of WSL2)
+      - DISPLAY
+      - WAYLAND_DISPLAY
+      - XDG_RUNTIME_DIR
+      - PULSE_SERVER
 
       # ROS pieces
-      - ROS_MASTER_URI=${ROS_MASTER_URI:-http://localhost:11311}
       # - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       # - ROS_LOCALHOST_ONLY=1
+
     volumes:
+      # The repository files and the bashrc file
       - ./:/home/user/MKZ_SIMULATOR_PROTOTYPE1/
+      - ./docker/.bashrc:/home/user/.bashrc
+
+      # Windows Display forwarding
+      - /mnt/wslg:/mnt/wslg
+      - /tmp/.X11-unix:/tmp/.X11-unix
+
+      # Other folders you may want to volume in
       # - /home/$USER/.ros/:/home/user/.ros/
       # - /home/$USER/bags/:/home/user/bags/
-      - ./docker/.bashrc:/home/user/.bashrc
+
     working_dir: /home/user/MKZ_SIMULATOR_PROTOTYPE1/
     privileged: true
-    # group_add:
-    #   - ${SHARED_GROUP:-1004}
     network_mode: host
     ipc: host
+
+    # group_add: # If you need to add docker user to a group
+    #   - ${SHARED_GROUP:-1004}
+
     deploy: # uncomment this if you want to use GPU (only needed for cuda/neural nets)
       resources:
         reservations:
