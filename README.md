@@ -41,4 +41,3 @@ The following aliases are already within the `.bashrc` file ready for you to use
 ## Example Video
 [MKZ Repository Usage Video](https://drive.google.com/file/d/1gSgTyQf3SKjWKxKWX4u6LPRy4zCWq6mr/view?usp=sharing)
 
-![Embedded Video](https://drive.google.com/file/d/1gSgTyQf3SKjWKxKWX4u6LPRy4zCWq6mr/preview)
