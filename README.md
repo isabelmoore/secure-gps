@@ -37,3 +37,8 @@ The following aliases are already within the `.bashrc` file ready for you to use
 * `teleop` runs the `teleop_twist_keyboard` node and allows you to control the MKZ when already running `record` in another terminal
 * `teleop_gui` instead utilizes `rqt_teleop` for a graphical version of teleop (seems to be fairly buggy)
 * `control` runs the lateral and longitudinal controllers and follows the recorded path
+
+## Example Video
+[MKZ Repository Usage Video](https://drive.google.com/file/d/1gSgTyQf3SKjWKxKWX4u6LPRy4zCWq6mr/view?usp=sharing)
+
+![Embedded Video](https://drive.google.com/file/d/1gSgTyQf3SKjWKxKWX4u6LPRy4zCWq6mr/preview)
