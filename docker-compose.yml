@@ -44,11 +44,11 @@ services:
     # group_add: # If you need to add docker user to a group
     #   - ${SHARED_GROUP:-1004}
 
-    deploy: # uncomment this if you want to use GPU (only needed for cuda/neural nets)
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+#    deploy: # uncomment this if you want to use GPU (only needed for cuda/neural nets)
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [gpu]
     command: ["bash"]

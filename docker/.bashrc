@@ -117,7 +117,7 @@ if ! shopt -oq posix; then
 fi
 
 alias sc='. ~/MKZ_SIMULATOR_PROTOTYPE1/install/setup.bash'
-alias build='cd ~/MKZ_SIMULATOR_PROTOTYPE1 && colcon build --symlink-install'
+alias build='cd ~/MKZ_SIMULATOR_PROTOTYPE1 && colcon build --symlink-install && sc'
 
 alias sim='ros2 launch dbw_gazebo_mkz gazebo_mkz.launch.py'
 
