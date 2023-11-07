@@ -14,7 +14,7 @@ If using docker then any distribution of linux can be utilized in addition to Wi
 Assuming that docker is installed, the following steps can be taken to initialize the repository.
 1. Clone:
    * `git clone git@github.com:tamu-edu-students/MKZ_SIMULATOR_PROTYPE1.git`
-   * **NOTE:** If you haven't already set up an SSH key for github.com you will need to do so here are some general steps
+   * **NOTE:** If you haven't already set up an SSH key for github.com you will need to do so to be able to clone this, here are some general steps
      * Go to the ssh key folder `cd ~/.ssh`
      * If it doesn't exist make it `mkdir ~/.ssh && cd ~/.ssh`
      * Do `ssh-keygen` and press enter a few times to do all default settings
