@@ -19,7 +19,7 @@ Assuming that docker is installed, the following steps can be taken to initializ
      * If it doesn't exist make it `mkdir ~/.ssh && cd ~/.ssh`
      * Do `ssh-keygen` and press enter a few times to do all default settings
      * Copy the output of `cat ~/.ssh/id_rsa.pub`
-     * Click on your profile picture in the top right and go to settings
+     * On the GitHub website, Click on your profile picture in the top right and go to settings
      * Under the SSH and GPG section, click `new ssh key`
      * Name it something helpful and paste the terminal output from before into the box
      * Click `Add SSH key`
