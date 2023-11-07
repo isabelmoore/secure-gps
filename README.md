@@ -13,12 +13,23 @@ If using docker then any distribution of linux can be utilized in addition to Wi
 
 Assuming that docker is installed, the following steps can be taken to initialize the repository.
 1. Clone:
-   * `git clone https://github.com/tamu-edu-students/MKZ_SIMULATOR_PROTYPE1.git`
+   * `git clone git@github.com:tamu-edu-students/MKZ_SIMULATOR_PROTYPE1.git`
+   * **NOTE:** If you haven't already set up an SSH key for github.com you will need to do so here are some general steps
+     * Go to the ssh key folder `cd ~/.ssh`
+     * If it doesn't exist make it `mkdir ~/.ssh && cd ~/.ssh`
+     * Do `ssh-keygen` and press enter a few times to do all default settings
+     * Copy the output of `cat ~/.ssh/id_rsa.pub`
+     * Click on your profile picture in the top right and go to settings
+     * Under the SSH and GPG section, click `new ssh key`
+     * Name it something helpful and paste the terminal output from before into the box
+     * Click `Add SSH key`
+     * Now find the ssh key you just added and click `configure sso`
+     * You will need to authorize tamu-edu-students to be able to use the ssh key
 2. Cd into folder:
    * `cd MKZ_SIMULATOR_PROTYPE1`
 3. Build the docker image: 
    * `docker compose build`
-4. Add the container running alias to your `.bashrc` with this command :
+4. Add the container running alias to your .bashrc with this command:
    * `echo "alias mkz='docker compose -f ~/MKZ_SIMULATOR_PROTYPE1/docker-compose.yml run --rm ros_humble'" >> ~/.bashrc`
    * NOTE: Path will need to be changed if not using home folder for repository
 5. Source your `.bashrc` file to utilize new alias
