@@ -38,7 +38,10 @@ RUN pip3 install \
     numpy \
     matplotlib \
     transforms3d \
-    utm
+    utm \
+    pandas \
+    geographiclib \
+    scipy
 
 # Create user
 RUN groupadd -g $GID $UNAME
@@ -55,7 +58,8 @@ RUN /bin/bash -c "bash <(wget -q -O - https://bitbucket.org/DataspeedInc/dbw_ros
 
 # Get extra dependencies
 RUN sudo apt-get update && sudo apt-get install -y \
-    ros-humble-dataspeed-dbw-gazebo
+    ros-humble-dataspeed-dbw-gazebo\
+    ros-humble-dataspeed-dbw-msgs
 
 # Get Workspace Dependencies
 RUN mkdir -p ~/MKZ_SIMULATOR_PROTOTYPE1/src
@@ -65,6 +69,21 @@ RUN cd ~/MKZ_SIMULATOR_PROTOTYPE1 && \
     rosdep update && \
     rosdep install --from-paths src --ignore-src -r -y
 
+
+
+# Piksi dependencies    
+RUN cd ~/ && \
+    git clone https://github.com/swift-nav/libsbp.git && \
+    cd libsbp && \
+    git checkout v4.11.0 && \
+    cd c && \
+    git submodule update --init --recursive && \
+    mkdir build && \
+    cd build && \
+    cmake DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF ../ && \
+    make && \
+    sudo make install
+RUN sudo apt update && sudo apt install -y ros-humble-gps-msgs libserialport-dev
 # Copy entrypoint
 COPY docker/entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]

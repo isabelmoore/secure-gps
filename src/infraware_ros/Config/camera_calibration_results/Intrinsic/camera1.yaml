@@ -1,0 +1,27 @@
+image_width: 800
+image_height: 600
+camera_name: narrow_stereo
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1307.94597,    0.     ,  407.90571,
+            0.     , 1309.18731,  296.33331,
+            0.     ,    0.     ,    1.     ]
+camera_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.203379, -0.085835, 0.001350, 0.001661, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1280.80566,    0.     ,  408.93273,    0.     ,
+            0.     , 1294.54846,  296.53816,    0.     ,
+            0.     ,    0.     ,    1.     ,    0.     ]
+# Serial number 20213531

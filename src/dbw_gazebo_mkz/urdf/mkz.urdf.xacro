@@ -11,7 +11,7 @@
   <xacro:dataspeed_dbw_gazebo_camera name="front_camera" parent="base_footprint" >
     <origin xyz="2.1 0 1.4" rpy="0 0.55 0" />
   </xacro:dataspeed_dbw_gazebo_camera>
-  <xacro:dataspeed_dbw_gazebo_gps name="perfect_gps" parent="base_footprint" x="0.6" y="0" z="1.45" rate="50.0" ref_lat="45.0" ref_lon="-81.0" />
+  <xacro:dataspeed_dbw_gazebo_gps name="perfect_gps" parent="base_footprint" x="0.6" y="0" z="1.45" rate="50." ref_lat="45.0" ref_lon="-81.0" />
   <xacro:imu_link name="imu_link" parent="base_footprint" x="1.6" y="0" z="1.45" rpy="0 0 0"/>
   
 </robot>

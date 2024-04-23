@@ -18,7 +18,7 @@ def generate_launch_description():
         DeclareLaunchArgument('VEHICLE_FILE',   default_value='mkz.yaml',       description='Vehicle type, MKZ'),
         DeclareLaunchArgument('WAYPOINTS_FILE', default_value='waypoints.dat',  description='Waypoints file path for following or collecting'),
         DeclareLaunchArgument('DESIRED_SPEED',  default_value='3.0',            description='Desired forward speed when following waypoints'),
-        DeclareLaunchArgument('USE_RVIZ',       default_value='True',           description='Use RVIZ for visualization'),
+        DeclareLaunchArgument('USE_RVIZ',       default_value='False',           description='Use RVIZ for visualization'),
 
         # Odometry publishing node, options for real and sim. Additional vehicle path RVIZ display.
         Node(

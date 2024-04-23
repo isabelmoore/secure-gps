@@ -34,7 +34,7 @@ services:
 
       # Other folders you may want to volume in
       # - /home/$USER/.ros/:/home/user/.ros/
-      # - /home/$USER/bags/:/home/user/bags/
+      - /home/$USER/bags/:/home/user/bags/
 
     working_dir: /home/user/MKZ_SIMULATOR_PROTOTYPE1/
     privileged: true

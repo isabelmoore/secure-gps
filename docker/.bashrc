@@ -129,6 +129,15 @@ alias basesim='ros2 launch dataspeed_dbw_gazebo dataspeed_dbw_gazebo.launch.xml'
 alias teleop='ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/vehicle/twist_cmd'
 alias teleop_gui='rqt_robot_steering --ros-args -r cmd_vel:=/vehicle/twist_cmd'
 
+alias sub='ros2 run infraware_ros SensorStacker'
+alias filter='ros2 run infraware_ros FilterInfra'
+alias filterVeh='ros2 run infraware_ros FilterVehicle'
+alias infra='ros2 launch infraware_ros infraware_launch.py INFRA:=True'
+alias infraVehicle='ros2 launch infraware_ros infraware_launch.py INFRA:=False'
+alias sensor='ros2 launch infraware_ros vehicle_sensors_launch.py Spoofed:=False'
+alias spoof='ros2 launch infraware_ros vehicle_sensors_launch.py Spoofed:=True'
+
+source /opt/ros/humble/setup.bash
 # Source workspace, then gazebo
 sc
 . /usr/share/gazebo-11/setup.bash
