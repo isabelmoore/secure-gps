@@ -24,6 +24,7 @@ class SpoofManipulate(Node):
         self.true_latitude = None
         self.manipulated_longitude = None
         self.manipulated_latitude = None
+        self.offset = 0
 
         # Timer for periodic logging
         self.log_timer = self.create_timer(1.0, self.log_gps_data)  # Adjust the interval as needed
@@ -54,10 +55,12 @@ class SpoofManipulate(Node):
 
         # Calculate the new longitude using the random bearing and distance
         new_long = geod.Direct(self.true_latitude, self.true_longitude, bearing_long, distance)['lon2']
-        
+        self.offset = self.offset + 0.00000001
         # Update the position
         self.manipulated_longitude = new_long
         self.manipulated_latitude = new_lat
+        # self.manipulated_longitude = self.true_longitude + self.offset
+        # self.manipulated_latitude = self.true_latitude + self.offset     
 
         # Create and publish global position message with the updated position
         global_message = NavSatFix()

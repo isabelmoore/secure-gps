@@ -97,8 +97,8 @@ class Sensor(Node):
             self.pub_rate = 20
             self.VehicleSensorsData= SensorHCompact()
             self.create_subscription(Imu,'/vehicle/imu_cartesian', self.imu_callback,10)
-            # self.create_subscription(NavSatFix, '/vehicle/gps_cartesian', self.gps_callback, 10)
-            self.create_subscription(NavSatFix, '/vehicle/gps_manipulated_cartesian', self.gps_callback, 10)
+            self.create_subscription(NavSatFix, '/vehicle/gps_cartesian', self.gps_callback, 10)
+            # self.create_subscription(NavSatFix, '/vehicle/gps_manipulated_cartesian', self.gps_callback, 10)
             self.create_subscription(Odometry,'/vehicle/odom_cartesian', self.odom_callback,10)
             self.pubVehicleSensors = self.create_publisher(SensorHCompact, '/VehicleSensorsData', 10)
             self.create_timer(1/self.pub_rate, self.Vehicle_Sensor_publisher)

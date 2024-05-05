@@ -7,11 +7,12 @@ import rclpy
 from rclpy.node import Node
 from rclpy.clock import Clock
 from vision_msgs.msg import SensorH , SensorHCompact, Tracker, TrackerArray
-# from swiftnav_ros2_driver.msg import Baseline
+from swiftnav_ros2_driver.msg import Baseline# from swiftnav_ros2_driver.msg import Baseline
 import matplotlib.pyplot as plt
 from .KalmanFilter import KalmanFilter
 from .HealthMonitor import HealthMonitor
-
+track1=[[],[],[],[],[],[],[],[]]
+Health=[[],[]]
 class GNN_Filter(Node):
     def __init__(self):
         super().__init__('FilterInfra')
@@ -45,7 +46,7 @@ class GNN_Filter(Node):
         self.color_arr =  plt.cm.cool(np.linspace(0, 1, 5))
 
         #subscribe to gps and sensor data in cartesian coordiantes
-        # self.create_subscription(Baseline, '/baseline',  self.piksi_callback,10)
+        self.create_subscription(Baseline, '/baseline',  self.piksi_callback,10)
         self.create_subscription(SensorHCompact,'/VehicleSensorsData',  self.Sensor_callback,10)
 
         print('Filtering!')
@@ -67,6 +68,21 @@ class GNN_Filter(Node):
         self.sensor_y_odom = []
         self.sensor_x_error = []
         self.sensor_y_error = []
+        self.piksi_append =[[],[]]
+        self.piksi_initial = None
+        self.File1=[]
+        self.file1 = open("Track_straight_spoof.txt","w")
+        self.file2 = open("Health_straight_spoof.txt","w")
+
+        # self.file1 = open("Track_circle_spoof.txt","w")
+        # self.file2 = open("Health_circle_spoof.txt","w")
+
+        # self.file1 = open("Track_lanechange_spoof.txt","w")
+        # self.file2 = open("Health_lanechange_spoof.txt","w")
+
+        # self.file1 = open("Track_figureeight_spoof.txt","w")
+        # self.file2 = open("Health_figureeight_spoof.txt","w")
+        
 
     def export_health_data(self):
         for i in range(3):
@@ -88,9 +104,14 @@ class GNN_Filter(Node):
         df.to_csv('ground_truth_data.txt', index=False)
 
 	#######################################################
-	## ROS subscriber for Piksi                                                        
-    # def piksi_callback(self, data):
-    #     self.piksi = [data.baseline_n_m,data.baseline_e_m,data.baseline_d_m]
+	# ROS subscriber for Piksi                                                        
+    def piksi_callback(self, data):
+        if self.piksi_initial is None:
+           self.piksi_initial = [data.baseline_e_m,data.baseline_n_m,data.baseline_d_m]
+        self.piksi = [data.baseline_e_m-self.piksi_initial[0],data.baseline_n_m-self.piksi_initial[1]]
+
+        self.piksi_append[0].append(data.baseline_e_m-self.piksi_initial[0])
+        self.piksi_append[1].append(data.baseline_n_m-self.piksi_initial[1])
     # #######################################################
     ### Sensor Subscriber
     def Sensor_callback(self,data):
@@ -189,7 +210,7 @@ class GNN_Filter(Node):
                             # q_.append(self.trackedAuxillary[p][q].q_)
                             # Omega_.append(self.trackedAuxillary[p][q].Omega_)
                             
-                            # ##only KF
+                            #only KF
                             # Sumx_KF = self.trackedAuxillary[p][q].q_ + Sumx_KF
                             # Sump_KF = (self.trackedAuxillary[p][q].Omega_) + Sump_KF
 
@@ -198,8 +219,13 @@ class GNN_Filter(Node):
 
                       
                 self.counter.append(true_counter)
-                if (true_counter == 1 and c < 0.25 and f == 4):
-                    C = 0
+                # if (true_counter == 1 and c < 0.25 and f == 4):
+                #     C = 0
+                if true_counter>0:
+                    averageHealth = C/true_counter
+
+                else:
+                    averageHealth = 0
                 if q_ != []:
 
                     Sumx_CI,Sump_CI = self.CI(q_,Omega_)
@@ -228,7 +254,7 @@ class GNN_Filter(Node):
                         self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
 
                         self.trackedObjects[p].maint = 0
-                        print( "\n Global Update Done!")
+                        print( "\n Global Update Done! WIth KF")
                         #print("\n sum over q is {} and sum over Omega is {} and x is {} with m {}".format(Sumx,Sump,self.trackedObjects[p].x,m))
                         tracker = Tracker()
                         tracker.x = self.trackedObjects[p].x[0].item()
@@ -252,13 +278,24 @@ class GNN_Filter(Node):
                             self.ax.scatter(self.sensor_x_gps, self.sensor_y_gps,  color=self.color_arr[1],label='GPS', s=4)
                             self.ax.scatter(self.sensor_x_odom, self.sensor_y_odom,  color=self.color_arr[2],label='Odometry', s=4)
                             # self.ax.scatter(self.sensor_x, self.sensor_y, c='red', label='Sensor Data', s=3)
-                            #self.ax.plot(piksi[0],piksi[1],label='Piksi')
+                            self.ax.plot(self.piksi_append[0],self.piksi_append[1],label='Piksi')
                             self.ax.plot(self.track1[2],self.track1[3], color=self.color_arr[4], label='Filter')
                             #self.ax.plot(piksi[0],piksi[1],label='Piksi')
                             self.ax.set_xlabel('X(m)')
                             self.ax.set_ylabel('Y(m)')
                             self.ax.legend()
-                        plt.pause(0.01) 
+                        plt.pause(0.01)
+                        if true_counter >0:
+                            erx1= self.trackedObjects[p].x[0]- self.piksi[0]
+                            ery1= self.trackedObjects[p].x[1]- self.piksi[1]
+                            # self.file1.write(str(curr_time.nanoseconds/1e9) +"," + str(self.trackedObjects[p].x[0].item()) +"," + str(erx1.item()) + "," +str(ery1.item()) +"," +str(self.trackedObjects[p].x[2].item)+","+ str(averageHealth)+ "\n")
+                            self.file1.write(str(curr_time.nanoseconds/1e9) +"," + str(self.trackedObjects[p].x[0].item()) +"," + str(erx1.item()) + "," +str(ery1.item()) +"," +str(self.trackedObjects[p].x[2].item)+","+ str(averageHealth)+ "\n")
+
+                            # self.File1.append(np.array([curr_time,self.piksi[1],self.trackedObjects[p].x[0], self.trackedObjects[p].x[1],erx1,ery1,self.trackedObjects[p].x[2],averageHealth]))
+
+                if self.trackedHealth[1][0].start > 0:
+                       self.file2.write(str(self.piksi[1])+","+str(self.trackedHealth[1][0].x[0])+"\n")
+
  
 	####################################################################################
 	## Covariance Intersection                                                    
@@ -341,7 +378,7 @@ class GNN_Filter(Node):
     def optimal_cost_finder(self, data, flag,flag_):
         self.assignment = False
         for i in range(np.shape(self.mahalanobisDistance)[1]):
-            if (np.all(self.assignmentTable[:,i]) and len(self.trackedObjects)<1 and flag == 4 ):
+            if (np.all(self.assignmentTable[:,i]) and len(self.trackedObjects)<1 and flag == 2 ):
                     print('No assignment!')
                     #print('\nNew Object ID: {}'.format(self.currID))
                     self.trackedObjects.append(KalmanFilter())
@@ -395,4 +432,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
     

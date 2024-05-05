@@ -84,6 +84,7 @@ RUN cd ~/ && \
     make && \
     sudo make install
 RUN sudo apt update && sudo apt install -y ros-humble-gps-msgs libserialport-dev
+RUN pip install --upgrade scipy
 # Copy entrypoint
 COPY docker/entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]

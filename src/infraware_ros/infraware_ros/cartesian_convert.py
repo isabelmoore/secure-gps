@@ -11,8 +11,10 @@ from geometry_msgs.msg import Pose, PoseWithCovariance, Quaternion, Point, Vecto
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 import matplotlib.pyplot as plt
-# from .KalmanFilterIMU import KalmanFilterIMU
+from .KalmanFilterIMU import KalmanFilterIMU
 from vectornav_msgs.msg import CommonGroup
+from dbw_ford_msgs.msg import SteeringReport
+
 
 
 np.set_printoptions(suppress=True, precision=2)
@@ -21,7 +23,7 @@ class SensorProcessingNode(Node):
     def __init__(self):
         super().__init__('sensor_processing_node')
         # self.imu_subscription = self.create_subscription(Imu, '/vehicle/imu_plugin/out', self.imu_callback, 10)
-        # self.gps_subscription = self.create_subscription(NavSatFix, '/vehicle/gps/fix', self.gps_callback, 10)
+        self.gps_vehicle_subscription = self.create_subscription(NavSatFix, '/vehicle/gps/fix', self.gps_vehicle_callback, 10)
         # self.gps_subscription = self.create_subscription(NavSatFix, '/manipulated_gps/global', self.gps_manipulated_callback, 10) # use local because all cartesian coordinates are local
         # self.odometry_subscription = self.create_subscription(Odometry, '/vehicle/odom', self.odometry_callback, 10)
 
@@ -29,7 +31,8 @@ class SensorProcessingNode(Node):
         self.imu_subscription = self.create_subscription(CommonGroup,'/vectornav/raw/common',self.imu_callback,10)
         self.gps_subscription = self.create_subscription(NavSatFix,"/vectornav/gnss", self.gps_callback, 10)
         self.gps_subscription = self.create_subscription(NavSatFix, '/manipulated_gps/global', self.gps_manipulated_callback, 10) # use local because all cartesian coordinates are local
-        self.odometry_subscription = self.create_subscription(PoseWithCovarianceStamped, '/vectornav/pose', self.odometry_callback, 10)
+        self.wheel_subscription = self.create_subscription(SteeringReport,'/vehicle/steering_report', self.wheel_encoder_callback,10)
+        # self.odometry_subscription = self.create_subscription(PoseWithCovarianceStamped, '/vectornav/pose', self.odometry_callback, 10)
 
 
         
@@ -40,6 +43,8 @@ class SensorProcessingNode(Node):
 
         # Initialize variables for data accumulation
         self.imu_position = np.array([0.0, 0.0, 0.0])
+        
+        self.imu_position_ = np.array([0.0, 0.0, 0.0])
         self.gps_position = np.array([0.0, 0.0, 0.0])
         self.gps_manipulated_position = np.array([0.0, 0.0, 0.0])
         self.odom_position = np.array([0.0, 0.0, 0.0])
@@ -47,7 +52,9 @@ class SensorProcessingNode(Node):
         # Initialize variables for IMU processing
         self.last_time = self.get_clock().now()
         self.imu_velocity = np.array([0.0, 0.0, 0.0])
+        # self.orientation_q = np.array([0.,0.,0.,0.])
         self.gravity = np.array([0.0, 0.0, 9.81])  # Gravity vector
+        self.earth_rate = np.array([2*np.pi/86400,0.0,0.0])
 
         # Timer to log data every second (change the period as needed)
         self.timer = self.create_timer(0.05, self.log_all_data)
@@ -60,7 +67,8 @@ class SensorProcessingNode(Node):
         self.GPS_published = False
         self.Imu_published = False
         self.i = 0
-
+        self.offset = 0.1
+        self.vehicle_speed = None
         # self.fig, self.axs = plt.subplots(3, 1, figsize=(10, 8))
         # self.fig.suptitle('Sensor Data Over Time')
         # self.axs[0].set_title('X Position')
@@ -99,6 +107,7 @@ class SensorProcessingNode(Node):
         #     ax.grid(True)
 
         self.initial_gps_position_ecef = None
+        self.initial_gps_vehicle_position_ecef = None
         self.initial_gps_manipulated_position_ecef = None
         self.initial_odom = None
 
@@ -106,19 +115,47 @@ class SensorProcessingNode(Node):
         self.last_plot_time = self.get_clock().now()
         self.times = []
 
-        # self.imu_track = KalmanFilterIMU()
+        self.imu_track = KalmanFilterIMU()
 
+    def wheel_encoder_callback(self,msg):
+        self.steering = msg.steering_wheel_angle
+        self.vehicle_speed = msg.speed
 
     def imu_callback(self, msg):
         current_time = self.get_clock().now()
         if self.Imu_published == False:
             self.last_time = current_time
-            dt = (current_time - self.last_time).nanoseconds / 1e9 
+            dt = (current_time - self.last_time).nanoseconds / 1e9
+            # self.orientation_q = np.array([msg.quaternion.x,msg.quaternion.y,msg.quaternion.z,msg.quaternion.w])
+            # self.orientation = np.array([msg.yawpitchroll.x,msg.yawpitchroll.y,msg.yawpitchroll.z])
             self.Imu_published = True
+            self.imu_track.set_state(np.array([[0],[0]]))
 
         else:
             dt = (current_time - self.last_time).nanoseconds / 1e9 
-            print( "else", self.last_time, current_time,dt)
+            # print( "else", self.last_time, current_time,dt)
+            # delta_theta = np.array([msg.deltatheta_dtheta.x,msg.deltatheta_dtheta.y,msg.deltatheta_dtheta.z])
+            # self.orientation = np.array([msg.yawpitchroll.x,msg.yawpitchroll.y,msg.yawpitchroll.z])
+            # self.orientation += delta_theta
+
+            # gamma = np.linalg.norm(delta_theta)/2
+            # if gamma >= 0.00001:
+            #     Psai = (np.sin(gamma)/(2*gamma))*delta_theta
+            # else:
+            #     Psai = 0.5*delta_theta
+            # Psai = delta_theta
+            # print("gamma",gamma, delta_theta,Psai)
+           
+            
+            # Psai_matrix = np.array([[0,-Psai[2],Psai[1]],[Psai[2],0,-Psai[0]],[-Psai[1],Psai[0],0]])
+            # tf_11 = (np.eye(3)-Psai_matrix).reshape(3,3)
+            # Quaternion_prediction_1 = np.append(tf_11,Psai.reshape(3,1),axis=1)
+        
+            # Quaternion_prediction_2 = np.array([[-Psai[0],-Psai[1],-Psai[2],1]])
+            # Quaternion_prediction = np.append(Quaternion_prediction_1,Quaternion_prediction_2,axis=0).reshape(4,4)
+            # # print("Quaternion_prediction:",Quaternion_prediction_1,Quaternion_prediction_2,Quaternion_prediction)
+            # orientation_q = Quaternion_prediction.dot(self.orientation_q)
+            # self.orientation_q = orientation_q/np.linalg.norm(orientation_q)
 
      
         # Extract linear acceleration and orientation from the message
@@ -127,16 +164,19 @@ class SensorProcessingNode(Node):
         #     msg.linear_acceleration.y, 
         #     msg.linear_acceleration.z])
         
-        # orientation_q = msg.orientation
-        orientation_q =msg.quaternion
+        # self.orientation_q = msg.orientation
+        self.orientation_q = np.array([msg.quaternion.x,msg.quaternion.y,msg.quaternion.z,msg.quaternion.w])
+
+
 
         # Convert quaternion to rotation matrix
         rotation = R.from_quat([
-            orientation_q.x, 
-            orientation_q.y, 
-            orientation_q.z, 
-            orientation_q.w])
-        print(R)
+            self.orientation_q[0], 
+            self.orientation_q[1], 
+            self.orientation_q[2], 
+            self.orientation_q[3]])
+        # rotation = R.from_euler('zyx', [self.orientation[0], self.orientation[1], self.orientation[2]], degrees=True)
+        # print(R)
         # self.gravity = np.array([0.0, msg.linear_acceleration.y, 9.81]) 
 
         # Rotate acceleration from IMU frame to world frame
@@ -150,16 +190,29 @@ class SensorProcessingNode(Node):
                                     msg.deltatheta_dvel.y,
                                     msg.deltatheta_dvel.z])
         deltatheta_dvel_world = rotation.apply(deltatheta_dvel)
-        self.imu_velocity += deltatheta_dvel_world
+        deltatheta_dvel_world_c = deltatheta_dvel_world + dt*(self.gravity-np.cross(self.earth_rate,self.imu_velocity))
+        self.imu_velocity += deltatheta_dvel_world_c
         
 
         # Integrate velocity to get position. This needs to accumulate over time, not just the last interval
         #self.imu_position += np.array(self.imu_velocity * dt )
-        self.imu_position += np.array(self.imu_velocity * dt + deltatheta_dvel*dt/2)
+        self.imu_position_ += np.array(self.imu_velocity * dt + deltatheta_dvel_world_c*dt/2)
+        # print(deltatheta_dvel_world,deltatheta_dvel_world_c*dt/2)
         # self.imu_position += np.array([0.02,0.01,0])
         # self.imu_position += np.array([-0.0006,0.0007,0])
         # Update last time for next callback
         self.last_time = current_time
+
+        if self.vehicle_speed is None: 
+            self.imu_position = self.imu_position_
+        else:
+            z = np.array([[self.imu_position_[0]],[self.imu_position_[1]]])
+            self.imu_track.EKF(self.vehicle_speed,self.steering,z,dt)
+            self.imu_position[0] = self.imu_track.x[0][0]
+            self.imu_position[1] = self.imu_track.x[1][0]
+            
+            # self.imu_position = self.imu_position_
+
 
         # Assuming self.imu_position contains [x_acceleration, y_acceleration, z_acceleration] data
         imu_msg = Imu()
@@ -180,9 +233,9 @@ class SensorProcessingNode(Node):
             #self.gps_published = True
         self.gps_position = self.initial_gps_rotation.dot(np.array(ecef_coords) - self.initial_gps_position_ecef)
         # self.gps_position = np.array(ecef_coords) - self.initial_gps_position_ecef
-        
+        self.offset += 0.1
         gps_msg = NavSatFix()
-        gps_msg.latitude = self.gps_position[0]
+        gps_msg.latitude = self.gps_position[0]+ self.offset
         gps_msg.longitude = self.gps_position[1]
         gps_msg.altitude = self.gps_position[2]
 
@@ -191,6 +244,31 @@ class SensorProcessingNode(Node):
         self.i += 1
         if self.i >5:
             self.GPS_published = True
+
+
+    def gps_vehicle_callback(self, msg):
+        # Convert latitude, longitude, and altitude to Cartesian ECEF coordinates
+        ecef_coords = self.gps_to_ecef(msg.latitude, msg.longitude, msg.altitude)
+        # Make sure to convert the tuple to a NumPy array
+        if self.initial_gps_vehicle_position_ecef is None:
+            self.initial_gps_vehicle_position_ecef = np.array(ecef_coords)
+            self.initial_gps_vehicle_rotation = self.rotation_matrix(msg.latitude, msg.longitude, msg.altitude)
+            #self.gps_published = True
+        self.gps_vehicle_position = self.initial_gps_vehicle_rotation.dot(np.array(ecef_coords) - self.initial_gps_vehicle_position_ecef)
+        # self.gps_position = np.array(ecef_coords) - self.initial_gps_position_ecef
+        self.offset += 0.01
+        gps_msg = NavSatFix()
+        gps_msg.latitude = self.gps_vehicle_position[0]
+        gps_msg.altitude = self.gps_vehicle_position[2]
+
+        if self.vehicle_speed is None:
+            pass
+        else:
+            z = np.array([[self.gps_vehicle_position[1]],[self.gps_vehicle_position[0]]])
+            self.imu_track.EKF(self.vehicle_speed,self.steering,z,0.05)
+            #Publish the manipulated GPS data
+            # self.gps_vehicle_publisher.publish(gps_msg)
+
 
     def gps_manipulated_callback(self, msg):
         # Convert latitude, longitude, and altitude to Cartesian ECEF coordinates

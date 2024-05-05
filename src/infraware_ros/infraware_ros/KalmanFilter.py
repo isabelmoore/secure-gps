@@ -10,8 +10,8 @@ class KalmanFilter:
         self.flag_ = 5
 
         # Kalman Filter parameters
-        self.x = np.array([[0], [0.], [-1.57]], dtype=float)
-        self.q = np.array([[0], [0.], [-157.0]], dtype=float)
+        self.x = np.array([[0], [0.], [0]], dtype=float)
+        self.q = np.array([[0], [0.], [0]], dtype=float)
         self.P = np.diag([3., 2., 0.01])
         self.Omega = np.diag([0.3, 0.5, 100])
         self.S = np.zeros((2, 2), dtype=float)
@@ -23,9 +23,9 @@ class KalmanFilter:
                            [0, 1, 0]], dtype=float)
 
         # Sensor measurment noise matrix
-        self.R_IMU = np.diag([0.5,  0.5]) # this one!
-        self.R_Odom = np.diag([0.1, 0.1])
-        self.R_GPS = np.diag([0.1,0.5])
+        self.R_IMU = 0.01*np.diag([0.1,  0.1]) # this one!
+        self.R_Odom = 0.1*np.diag([0.1, 0.1])
+        self.R_GPS = 0.01*np.diag([0.1,0.1])
 
     ####################################################################
     # Computes the continous white noise model base on
@@ -62,10 +62,10 @@ class KalmanFilter:
     def predict(self, dt):
         self.Update_flag = False
         self.maint += 1
-        self.Q = np.diag([0.1,0.1,0.01]) 
+        self.Q = np.diag([0.2,0.2,0.1]) 
         self.Q = self.piecewise_white_noise(dt)
         self.W = np.linalg.pinv(self.Q)
-        V = 5
+        V = 4.5
         self.F = np.array([[1, 0,-dt*V*(math.sin(self.x[2]))],
                            [0, 1, dt*V*(math.cos(self.x[2]))],
                            [0, 0, 1                  ]], dtype=float)

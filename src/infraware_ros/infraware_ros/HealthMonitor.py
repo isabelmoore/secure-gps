@@ -32,6 +32,7 @@ class HealthMonitor:
 
 
     ''' Health Monitoring'''
+
     def predict(self,z ,flag, t): 
         if self.start <3 :
             self.z__ = z
@@ -46,19 +47,21 @@ class HealthMonitor:
                            [0.0011,  0.9989]], dtype=float)
         
         ### Defining Health Measurement Function ####
-        if flag == 3: 
+        if (flag == 3): 
             ax = self.z[0]-2*self.z_[0]+ self.z__[0]
             ay = self.z[1]-2*self.z_[1]+ self.z__[1]
             self.a = np.sqrt(ax**2 + ay**2)
-            self.H = 1- 0.8*np.sign(self.a)* self.a
-            if self.H < 0 :
-                self.H = 0
+            self.H_1 = 1- 3*np.sign(self.a)* self.a
+            if self.H_1 < 0 :
+                self.H_1 = 0
         
-        else:
             self.dy = self.z[0]-self.z_[0]
-            self.H = 1-np.sign(self.dy)*self.dy/2
-            if self.H < 0:
-                self.H = 0
+            self.H_2 = 1-np.sign(self.dy)*self.dy/1
+            if self.H_2 < 0:
+                self.H_2 = 0
+            self.H= min(self.H_1,self.H_2)
+        else:
+            self.H = 1
         # Assuming some predefined thresholds based on system requirements
         # dt = t - self.t_now
         # self.t_now = t
@@ -70,7 +73,7 @@ class HealthMonitor:
         # alg_low = 0.0
         # alg_high = 0.2
 
-        # # Using the Algebraic Health Assessment
+        # # # Using the Algebraic Health Assessment
         # if dm < alg_low:
         #     self.H_alg = 1
         # elif dm > alg_high:
