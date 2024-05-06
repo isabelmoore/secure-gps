@@ -235,7 +235,7 @@ class SensorProcessingNode(Node):
         # self.gps_position = np.array(ecef_coords) - self.initial_gps_position_ecef
         self.offset += 0.1
         gps_msg = NavSatFix()
-        gps_msg.latitude = self.gps_position[0]+ self.offset
+        gps_msg.latitude = self.gps_position[0] 
         gps_msg.longitude = self.gps_position[1]
         gps_msg.altitude = self.gps_position[2]
 
@@ -265,7 +265,7 @@ class SensorProcessingNode(Node):
             pass
         else:
             z = np.array([[self.gps_vehicle_position[1]],[self.gps_vehicle_position[0]]])
-            self.imu_track.EKF(self.vehicle_speed,self.steering,z,0.05)
+            self.imu_track.EKF(self.vehicle_speed,self.steering,z,0.05) 
             #Publish the manipulated GPS data
             # self.gps_vehicle_publisher.publish(gps_msg)
 

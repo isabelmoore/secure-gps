@@ -11,6 +11,8 @@ from swiftnav_ros2_driver.msg import Baseline# from swiftnav_ros2_driver.msg imp
 import matplotlib.pyplot as plt
 from .KalmanFilter import KalmanFilter
 from .HealthMonitor import HealthMonitor
+import cvxpy as cp
+
 track1=[[],[],[],[],[],[],[],[]]
 Health=[[],[]]
 class GNN_Filter(Node):
@@ -29,7 +31,7 @@ class GNN_Filter(Node):
         self.trackedObjects = []
         self.numTrackedObjects = 0
         self.mahalanobisDistance = np.array([])
-        self.threshold = 8 #This will effect the new track creation 
+        self.threshold = 100 #This will effect the new track creation 
         self.numMeasurements = 0
         self.assignmentTable = np.array([])
         self.frameNumber = 0
@@ -71,11 +73,11 @@ class GNN_Filter(Node):
         self.piksi_append =[[],[]]
         self.piksi_initial = None
         self.File1=[]
-        self.file1 = open("Track_straight_spoof.txt","w")
-        self.file2 = open("Health_straight_spoof.txt","w")
+        # self.file1 = open("Track_straight_spoof.txt","w")
+        # self.file2 = open("Health_straight_spoof.txt","w")
 
-        # self.file1 = open("Track_circle_spoof.txt","w")
-        # self.file2 = open("Health_circle_spoof.txt","w")
+        self.file1 = open("Track_circle_spoof.txt","w")
+        self.file2 = open("Health_circle_spoof.txt","w")
 
         # self.file1 = open("Track_lanechange_spoof.txt","w")
         # self.file2 = open("Health_lanechange_spoof.txt","w")
@@ -118,8 +120,8 @@ class GNN_Filter(Node):
         dt = 0.05
         n = len(self.trackedObjects)
         m = len(data.sensor) 
-
-        print("\t No of Track is {} and No of measurement is {} \n".format(n,m))
+        print("new measurement arrived!")
+        # print("\t No of Track is {} and No of measurement is {} \n".format(n,m))
         '''
         #With Radar
         for i in range(m): #measurement
@@ -145,7 +147,7 @@ class GNN_Filter(Node):
                for j in range(m):  
                    self.trackedAuxillary[k][j] = deepcopy(self.trackedObjects[k])
                    #print("after predict",self.trackedAuxillary[k][j].Update_flag)
-                   #print("\n x after predict of track {} and measuremnt {} is : {}".format(k,j,self.trackedAuxillary[k][j].x))
+                #    print("\n x after predict of track {} and measuremnt {} is : {}".format(k,j,self.trackedAuxillary[k][j].x))
            
            for i in range(m): #measurement
                 if data.sensor[i].id:
@@ -176,7 +178,7 @@ class GNN_Filter(Node):
                         flag = 3 
                     elif flag_ == 3: #Odom
                         flag = 4 
-                    print("the flag is :{}".format(flag))
+                    # print("the flag is :{}".format(flag))
                     self.i = i
                     self.get_mahalonobis(data.sensor[i],flag,flag_)
 
@@ -191,70 +193,68 @@ class GNN_Filter(Node):
                 q_= []
                 Omega_ = []
                 for q in range(m): #measurement 
-                    if data.sensor[i].id: 
-                        print("\n Updated is {} for track {} and measurement {} ".format(self.trackedAuxillary[p][q].Update_flag,p,q))
+                    
+                        # print("\n Updated is {} for track {} and measurement {} ".format(self.trackedAuxillary[p][q].Update_flag,p,q))
                         if self.trackedAuxillary[p][q].Update_flag == True:
                     
                             true_counter += 1
                             f = self.trackedAuxillary[p][q].flag_ - 1
                             c = self.trackedHealth[f][p].x[0]
                             ## SHARF
-                            q_.append(c*self.trackedAuxillary[p][q].q_)
-                            Omega_.append(c*self.trackedAuxillary[p][q].Omega_)
+                            # q_.append(c*self.trackedAuxillary[p][q].q_)
+                            # Omega_.append(c*self.trackedAuxillary[p][q].Omega_)
 
                             Sumx_KF = c*self.trackedAuxillary[p][q].q_ + Sumx_KF
                             Sump_KF = c*(self.trackedAuxillary[p][q].Omega_) + Sump_KF
                             C = C + c
 
                             ##Only CI
-                            # q_.append(self.trackedAuxillary[p][q].q_)
-                            # Omega_.append(self.trackedAuxillary[p][q].Omega_)
+                            q_.append(self.trackedAuxillary[p][q].q_)
+                            Omega_.append(self.trackedAuxillary[p][q].Omega_)
+                            # print("q_",q_)
                             
                             #only KF
                             # Sumx_KF = self.trackedAuxillary[p][q].q_ + Sumx_KF
                             # Sump_KF = (self.trackedAuxillary[p][q].Omega_) + Sump_KF
-
+                    
+                ## Only KF
+                # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF
+                # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF
+                # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
+                # self.trackedObjects[p].maint = 0
                             
+                if q_ != []:
 
+                        Sumx_CI,Sump_CI = self.CI(q_,Omega_)
+                    
+                        ## Only CI 
+                        self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_CI
+                        self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_CI
+                        self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
+                        self.trackedObjects[p].maint = 0
 
-                      
+                        print( "\n Global Update Done! WIth CI")
+
+                        # print("Omega Inverse is {} and x is {}".format(np.linalg.pinv(self.trackedObjects[p].Omega),self.trackedObjects[p].x))
+                           
                 self.counter.append(true_counter)
                 # if (true_counter == 1 and c < 0.25 and f == 4):
                 #     C = 0
                 if true_counter>0:
-                    averageHealth = C/true_counter
+                        averageHealth = C/true_counter
 
                 else:
-                    averageHealth = 0
-                if q_ != []:
+                        averageHealth = 0
 
-                    Sumx_CI,Sump_CI = self.CI(q_,Omega_)
-                    
-                    ## Only CI 
-                    # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_CI
-                    # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_CI
-                    # #self.trackedObjects[p].P = np.linalg.pinv(self.trackedObjects[p].Omega)
-                    # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
-
-                    
-                    
-                    ## Only KF
-                    # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF
-                    # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF
-                    # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
-                    # self.trackedObjects[p].maint = 0
-
-                    
-               
                 if (m != 0 and C!= 0):
                     
                         # SHARF
-                        self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF -(1-C/true_counter)*(Sumx_KF-Sumx_CI)
-                        self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF - (1-C/true_counter)*(Sump_KF-Sump_CI)
-                        self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
+                        # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF -(1-C/true_counter)*(Sumx_KF-Sumx_CI)
+                        # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF - (1-C/true_counter)*(Sump_KF-Sump_CI)
+                        # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
 
-                        self.trackedObjects[p].maint = 0
-                        print( "\n Global Update Done! WIth KF")
+                        # self.trackedObjects[p].maint = 0
+                        # print( "\n Global Update Done! WIth KF")
                         #print("\n sum over q is {} and sum over Omega is {} and x is {} with m {}".format(Sumx,Sump,self.trackedObjects[p].x,m))
                         tracker = Tracker()
                         tracker.x = self.trackedObjects[p].x[0].item()
@@ -300,13 +300,19 @@ class GNN_Filter(Node):
 	####################################################################################
 	## Covariance Intersection                                                    
     def CI(self,q_,omega_):
+        t = self.get_clock().now().nanoseconds/10e9
         n = np.shape(q_)[0]
         c = np.zeros((n),dtype = float)
         A_eq = np.ones((1,n),dtype = float)
         for i in range(n):    
             c[i] = np.trace(omega_[i])
-        result = linprog(c.T, A_ub = None, b_ub = None, A_eq = A_eq, b_eq = 1, bounds = [0,1])
-        w_ = result.x
+        #result = linprog(c.T, A_ub = None, b_ub = None, A_eq = A_eq, b_eq = 1, bounds = [0,1])
+        #w_ = result.x
+        w = cp.Variable(n)
+        prob = cp.Problem(cp.Minimize(c.T @ w),[A_eq @ w == 1])
+        prob.solve()
+        w_= w.value
+        print("In slover",w_)
         Sumx_CI = np.zeros((self.x_size,1), dtype = float)
         Sump_CI = np.zeros((self.x_size,self.x_size), dtype = float)
         W = 0.00
@@ -316,6 +322,8 @@ class GNN_Filter(Node):
             Sump_CI = w_[i]*omega_[i] + Sump_CI
         Sumx_CI = Sumx_CI/W
         Sump_CI = Sump_CI/W
+        dt = self.get_clock().now().nanoseconds/10e9-t
+        print("Inside CI the weights are:{} {} and dt is{} \n ".format(w_,q_,dt))
 
         return Sumx_CI, Sump_CI
 
@@ -361,9 +369,9 @@ class GNN_Filter(Node):
                         self.trackedObjects[j].measurement(data[i], flag)
                         y = self.trackedObjects[j].y
                         #print('\tData {}: {}'.format(i, data[i]))
-                        print('\tResidual: {} and Sinv {}'.format(y,Sinv))
+                        # print('\tResidual: {} and Sinv {}'.format(y,Sinv))
                         tmp = y.T.dot(Sinv).dot(y)
-                        print('tmp: {}'.format(tmp))
+                        # print('tmp: {}'.format(tmp))
                         tmp = np.sqrt(tmp*np.sign(tmp))
                         self.mahalanobisDistance[j, i] = tmp
                         if (tmp < self.threshold):
@@ -371,7 +379,7 @@ class GNN_Filter(Node):
                         else:
                             self.assignmentTable[j, i] = 1
             self.optimal_cost_finder(data, flag,flag_)
-            print("\n mahalonobis didtance: {}".format(self.mahalanobisDistance))
+            # print("\n mahalonobis didtance: {}".format(self.mahalanobisDistance))
             data_= data
             
             
@@ -393,7 +401,7 @@ class GNN_Filter(Node):
       
         if (self.mahalanobisDistance.size > 0 and self.assignment == False ):
             row_ind, col_ind = linear_sum_assignment(self.mahalanobisDistance)
-            print('\n Index {},{}: Mahal {}' .format(row_ind,col_ind,self.mahalanobisDistance))
+            # print('\n Index {},{}: Mahal {}' .format(row_ind,col_ind,self.mahalanobisDistance))
             for  row, i in enumerate(col_ind):
                 objNum = row_ind[row]
                 if flag == 3: # if 10 else 2.5
@@ -403,7 +411,7 @@ class GNN_Filter(Node):
                     #print('\n inside loop of measurement {} with objNum {} threshold is {}'.format(i,objNum,threshold))
                 if (self.mahalanobisDistance[objNum][i]<threshold):
                     f = flag_ -1
-                    print("self.i",self.i,f,i)
+                    # print("self.i",self.i,f,i)
                     t= Clock().now().nanoseconds
                     self.trackedHealth[f][objNum].predict(data[i],flag,t)
                     # Before accessing self.trackedAuxillary[objNum], check its existence
@@ -416,7 +424,7 @@ class GNN_Filter(Node):
                     else:
                         print(f"Access error: objNum={objNum} is out of bounds or not initialized.")
 
-                    #print('\n Track {} updated with measurement {} (i={}) and x is {}'.format(objNum,self.i,i,self.trackedAuxillary[objNum][self.i].x))
+                    # print('\n Track {} updated with measurement {} from flag {} (i={}) and x is {}'.format(objNum,data[i],flag,i,self.trackedAuxillary[objNum][self.i].x))
                     #print('\n Track health {} updated with flag {}  '.format(objNum,f))
                     if flag == 0:
                         self.Only_radar[objNum] = 0
