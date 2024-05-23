@@ -27,7 +27,7 @@ class SpoofManipulate(Node):
         self.offset = 0
 
         # Timer for periodic logging
-        self.log_timer = self.create_timer(1.0, self.log_gps_data)  # Adjust the interval as needed
+        # self.log_timer = self.create_timer(1.0, self.log_gps_data)  # Adjust the interval as needed
 
     def random_bearing(self):
         # Generate two random bearings: one for latitude and one for longitude
@@ -55,7 +55,7 @@ class SpoofManipulate(Node):
 
         # Calculate the new longitude using the random bearing and distance
         new_long = geod.Direct(self.true_latitude, self.true_longitude, bearing_long, distance)['lon2']
-        self.offset = self.offset + 0.00000001
+        # self.offset = self.offset + 0.00000001
         # Update the position
         self.manipulated_longitude = new_long
         self.manipulated_latitude = new_lat
@@ -67,7 +67,7 @@ class SpoofManipulate(Node):
         global_message.longitude = self.manipulated_longitude
         global_message.latitude = self.manipulated_latitude
         self.global_publisher.publish(global_message)
-
+        print("Spoofed Publishe")
         ''' Random Spherical Coordinates -- Own Path '''
 
         # if self.manipulated_longitude is None or self.manipulated_latitude is None:
@@ -123,11 +123,11 @@ class SpoofManipulate(Node):
         # local_message.pose.pose.position.y = self.manipulated_latitude
         # self.local_publisher.publish(local_message)
 
-    def log_gps_data(self):
-        if self.true_longitude is not None and self.true_latitude is not None:
-            self.get_logger().info(f'\nTrue Longitude: {self.true_longitude} \nTrue Latitude: {self.true_latitude}')
-        if self.manipulated_longitude is not None and self.manipulated_latitude is not None:
-            self.get_logger().info(f'\nManipulated Longitude: {self.manipulated_longitude} \nManipulated Latitude: {self.manipulated_latitude}')
+    # def log_gps_data(self):
+    #     if self.true_longitude is not None and self.true_latitude is not None:
+    #         self.get_logger().info(f'\nTrue Longitude: {self.true_longitude} \nTrue Latitude: {self.true_latitude}')
+    #     if self.manipulated_longitude is not None and self.manipulated_latitude is not None:
+    #         self.get_logger().info(f'\nManipulated Longitude: {self.manipulated_longitude} \nManipulated Latitude: {self.manipulated_latitude}')
 
 def main(args=None):
     rclpy.init(args=args)

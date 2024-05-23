@@ -11,7 +11,7 @@ from swiftnav_ros2_driver.msg import Baseline# from swiftnav_ros2_driver.msg imp
 import matplotlib.pyplot as plt
 from .KalmanFilter import KalmanFilter
 from .HealthMonitor import HealthMonitor
-import cvxpy as cp
+# import cvxpy as cp
 
 track1=[[],[],[],[],[],[],[],[]]
 Health=[[],[]]
@@ -31,7 +31,7 @@ class GNN_Filter(Node):
         self.trackedObjects = []
         self.numTrackedObjects = 0
         self.mahalanobisDistance = np.array([])
-        self.threshold = 100 #This will effect the new track creation 
+        self.threshold = 1000 #This will effect the new track creation 
         self.numMeasurements = 0
         self.assignmentTable = np.array([])
         self.frameNumber = 0
@@ -54,7 +54,7 @@ class GNN_Filter(Node):
         print('Filtering!')
         self.prev_time = Clock().now().nanoseconds
         self.plot_timer = self.create_timer(40, self.export_health_data)  
-        self.plot_timer = self.create_timer(40, self.export_pos)
+        self.plot_timer = self.create_timer(1, self.export_pos)
 
         #Initials plots
         self.fig,self.ax = plt.subplots()
@@ -68,19 +68,24 @@ class GNN_Filter(Node):
         self.sensor_y_gps = []
         self.sensor_x_odom = []
         self.sensor_y_odom = []
+        self.sensor_x_gps_vehicle = []
+        self.sensor_y_gps_vehicle = []
         self.sensor_x_error = []
         self.sensor_y_error = []
         self.piksi_append =[[],[]]
         self.piksi_initial = None
         self.File1=[]
-        # self.file1 = open("Track_straight_spoof.txt","w")
-        # self.file2 = open("Health_straight_spoof.txt","w")
+        self.df=[]
+        self.gps_x =[0.]
+        self.gps_y =[0.]
+        # self.file1 = open("Track_straight_spoof_SHARF.txt","w")
+        # self.file2 = open("Health_straight_spoof_SHARF.txt","w")
 
-        self.file1 = open("Track_circle_spoof.txt","w")
-        self.file2 = open("Health_circle_spoof.txt","w")
+        # self.file1 = open("Track_circle_spoof_SHARF.txt","w")
+        # self.file2 = open("Health_circle_spoof_SHARF.txt","w")
 
-        # self.file1 = open("Track_lanechange_spoof.txt","w")
-        # self.file2 = open("Health_lanechange_spoof.txt","w")
+        # self.file1 = open("Track_lanechange_spoof_SHARF.txt","w")
+        # self.file2 = open("Health_lanechange_spoof_SHARF.txt","w")
 
         # self.file1 = open("Track_figureeight_spoof.txt","w")
         # self.file2 = open("Health_figureeight_spoof.txt","w")
@@ -93,17 +98,24 @@ class GNN_Filter(Node):
 
     def export_pos(self):
         # Create a DataFrame from the health data, Δm data, and time steps
-        self.get_logger().info(f'odom length: {len(self.sensor_x_odom)}, {len(self.sensor_y_odom)}')
-        self.get_logger().info(f'filter length: {len(self.track1[2])}, {len(self.track1[3])}')
+        # self.get_logger().info(f'odom length: {len(self.sensor_x_odom)}, {len(self.sensor_y_odom)}')
+        # self.get_logger().info(f'filter length: {len(self.track1[2])}, {len(self.track1[3])}')
 
-        data = {
-            'Filter Difference X': self.sensor_x_error,
-            'Filter Difference Y': self.sensor_y_error
-        }
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(self.df,columns=['Filter X',
+            'Filter Y',
+            'IMU X',
+            'IMU Y',
+            'GPS X',
+            'GPS Y',
+            'Ground Truth X',
+            'Ground Truth Y',
+            'Algorithm',
+            'Spoofing Rate'])
         
         # Export the DataFrame to an Excel file
-        df.to_csv('ground_truth_data.txt', index=False)
+        # df.to_csv('Track_Sensor_SHARF_Straight.txt', index=False)
+        # df.to_csv('Track_Sensor_SHARF_LaneChange.txt', index=False)
+        df.to_csv('Track_Sensor_SHARF_Circle.txt', index=False)
 
 	#######################################################
 	# ROS subscriber for Piksi                                                        
@@ -120,7 +132,7 @@ class GNN_Filter(Node):
         dt = 0.05
         n = len(self.trackedObjects)
         m = len(data.sensor) 
-        print("new measurement arrived!")
+        # print("new measurement arrived!")
         # print("\t No of Track is {} and No of measurement is {} \n".format(n,m))
         '''
         #With Radar
@@ -156,12 +168,19 @@ class GNN_Filter(Node):
                     if sensor_id == 1:
                         self.sensor_x_imu.append(data.sensor[i].x)
                         self.sensor_y_imu.append(data.sensor[i].y)
+                        self.imu_x = data.sensor[i].x
+                        self.imu_y = data.sensor[i].y
                     if sensor_id == 2:
                         self.sensor_x_gps.append(data.sensor[i].x)
                         self.sensor_y_gps.append(data.sensor[i].y)
+                        self.gps_x = data.sensor[i].x
+                        self.gps_y = data.sensor[i].y
                     if sensor_id == 3:
-                        self.sensor_x_odom.append(data.sensor[i].x)
-                        self.sensor_y_odom.append(data.sensor[i].y)
+                        self.sensor_x_gps_vehicle.append(data.sensor[i].x)
+                        self.sensor_y_gps_vehicle.append(data.sensor[i].y)
+                    # if sensor_id == 4:
+                    #     self.sensor_x_odom.append(data.sensor[i].x)
+                    #     self.sensor_y_odom.append(data.sensor[i].y)
                     # print(data.sensor[i].x, data.sensor[i].y)
                     self.sensor_x.append(data.sensor[i].x)
                     self.sensor_y.append(data.sensor[i].y)
@@ -173,11 +192,13 @@ class GNN_Filter(Node):
                         flag__ = np.array([data.sensor[i].id[0]])
                         flag_ = (flag__[0]).item()
                     if flag_ == 1:
-                        flag = 2 #IMU
-                    elif flag_ == 2: #GPS
+                        flag = 2 #Vectornav IMU
+                    elif flag_ == 2: #Vectornav GPS
                         flag = 3 
-                    elif flag_ == 3: #Odom
-                        flag = 4 
+                    elif flag_ == 3: #Low res GPS
+                        flag = 4
+                    # elif flag_ == 3: #Odom
+                    #     flag = 4 
                     # print("the flag is :{}".format(flag))
                     self.i = i
                     self.get_mahalonobis(data.sensor[i],flag,flag_)
@@ -201,19 +222,19 @@ class GNN_Filter(Node):
                             f = self.trackedAuxillary[p][q].flag_ - 1
                             c = self.trackedHealth[f][p].x[0]
                             ## SHARF
-                            # q_.append(c*self.trackedAuxillary[p][q].q_)
-                            # Omega_.append(c*self.trackedAuxillary[p][q].Omega_)
+                            q_.append(c*self.trackedAuxillary[p][q].q_)
+                            Omega_.append(c*self.trackedAuxillary[p][q].Omega_)
 
                             Sumx_KF = c*self.trackedAuxillary[p][q].q_ + Sumx_KF
                             Sump_KF = c*(self.trackedAuxillary[p][q].Omega_) + Sump_KF
                             C = C + c
 
                             ##Only CI
-                            q_.append(self.trackedAuxillary[p][q].q_)
-                            Omega_.append(self.trackedAuxillary[p][q].Omega_)
-                            # print("q_",q_)
+                            # q_.append(self.trackedAuxillary[p][q].q_)
+                            # Omega_.append(self.trackedAuxillary[p][q].Omega_)
+                            # # print("q_",q_)
                             
-                            #only KF
+                            # #only KF
                             # Sumx_KF = self.trackedAuxillary[p][q].q_ + Sumx_KF
                             # Sump_KF = (self.trackedAuxillary[p][q].Omega_) + Sump_KF
                     
@@ -228,12 +249,12 @@ class GNN_Filter(Node):
                         Sumx_CI,Sump_CI = self.CI(q_,Omega_)
                     
                         ## Only CI 
-                        self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_CI
-                        self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_CI
-                        self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
-                        self.trackedObjects[p].maint = 0
+                        # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_CI
+                        # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_CI
+                        # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
+                        # self.trackedObjects[p].maint = 0
 
-                        print( "\n Global Update Done! WIth CI")
+                        # print( "\n Global Update Done! WIth CI")
 
                         # print("Omega Inverse is {} and x is {}".format(np.linalg.pinv(self.trackedObjects[p].Omega),self.trackedObjects[p].x))
                            
@@ -249,13 +270,13 @@ class GNN_Filter(Node):
                 if (m != 0 and C!= 0):
                     
                         # SHARF
-                        # self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF -(1-C/true_counter)*(Sumx_KF-Sumx_CI)
-                        # self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF - (1-C/true_counter)*(Sump_KF-Sump_CI)
-                        # self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
+                        self.trackedObjects[p].q = self.trackedObjects[p].q + Sumx_KF -(1-C/true_counter)*(Sumx_KF-Sumx_CI)
+                        self.trackedObjects[p].Omega = self.trackedObjects[p].Omega + Sump_KF - (1-C/true_counter)*(Sump_KF-Sump_CI)
+                        self.trackedObjects[p].x = np.linalg.pinv(self.trackedObjects[p].Omega).dot(self.trackedObjects[p].q)
 
-                        # self.trackedObjects[p].maint = 0
+                        self.trackedObjects[p].maint = 0
                         # print( "\n Global Update Done! WIth KF")
-                        #print("\n sum over q is {} and sum over Omega is {} and x is {} with m {}".format(Sumx,Sump,self.trackedObjects[p].x,m))
+                        # print("\n sum over q is {} and sum over Omega is {} and x is {} with m {}".format(Sumx,Sump,self.trackedObjects[p].x,m))
                         tracker = Tracker()
                         tracker.x = self.trackedObjects[p].x[0].item()
                         tracker.y = self.trackedObjects[p].x[1].item()
@@ -275,8 +296,9 @@ class GNN_Filter(Node):
                         if self.track1:
                             self.ax.clear()
                             self.ax.scatter(self.sensor_x_imu, self.sensor_y_imu, color= self.color_arr[0], label='IMU', s=4)
-                            self.ax.scatter(self.sensor_x_gps, self.sensor_y_gps,  color=self.color_arr[1],label='GPS', s=4)
-                            self.ax.scatter(self.sensor_x_odom, self.sensor_y_odom,  color=self.color_arr[2],label='Odometry', s=4)
+                            self.ax.scatter(self.sensor_x_gps, self.sensor_y_gps,  color=self.color_arr[1],label='GPS Vectornav', s=4)
+                            self.ax.scatter(self.sensor_x_gps_vehicle, self.sensor_y_gps_vehicle,  color=self.color_arr[2],label='GPS Low Res', s=4)
+                            # self.ax.scatter(self.sensor_x_odom, self.sensor_y_odom,  color=self.color_arr[2],label='Odometry', s=4)
                             # self.ax.scatter(self.sensor_x, self.sensor_y, c='red', label='Sensor Data', s=3)
                             self.ax.plot(self.piksi_append[0],self.piksi_append[1],label='Piksi')
                             self.ax.plot(self.track1[2],self.track1[3], color=self.color_arr[4], label='Filter')
@@ -289,12 +311,26 @@ class GNN_Filter(Node):
                             erx1= self.trackedObjects[p].x[0]- self.piksi[0]
                             ery1= self.trackedObjects[p].x[1]- self.piksi[1]
                             # self.file1.write(str(curr_time.nanoseconds/1e9) +"," + str(self.trackedObjects[p].x[0].item()) +"," + str(erx1.item()) + "," +str(ery1.item()) +"," +str(self.trackedObjects[p].x[2].item)+","+ str(averageHealth)+ "\n")
-                            self.file1.write(str(curr_time.nanoseconds/1e9) +"," + str(self.trackedObjects[p].x[0].item()) +"," + str(erx1.item()) + "," +str(ery1.item()) +"," +str(self.trackedObjects[p].x[2].item)+","+ str(averageHealth)+ "\n")
+                            # self.file1.write(str(curr_time.nanoseconds/1e9) +"," + str(self.trackedObjects[p].x[0].item()) +"," + str(erx1.item()) + "," +str(ery1.item()) +"," +str(self.trackedObjects[p].x[2].item)+","+ str(averageHealth)+ ","+str(self.trackedHealth[1][0].x[0].item())+"\n")
+                            
+                            Track_dict = {
+                                            'Filter X': self.trackedObjects[0].x[0].item(),
+                                            'Filter Y': self.trackedObjects[0].x[1].item(),
+                                            'IMU X': self.imu_x[0],
+                                            'IMU Y' : self.imu_y[0],
+                                            'GPS X' : self.gps_x[0],
+                                            'GPS Y' : self.gps_y[0],
+                                            'Ground Truth X': self.piksi[0],
+                                            'Ground Truth Y': self.piksi[1],
+                                            'Algorithm': "SHARF",
+                                            'Spoofing Rate': 2
 
+                                         }
+                            self.df.append(Track_dict)
                             # self.File1.append(np.array([curr_time,self.piksi[1],self.trackedObjects[p].x[0], self.trackedObjects[p].x[1],erx1,ery1,self.trackedObjects[p].x[2],averageHealth]))
 
-                if self.trackedHealth[1][0].start > 0:
-                       self.file2.write(str(self.piksi[1])+","+str(self.trackedHealth[1][0].x[0])+"\n")
+                # if self.trackedHealth[1][0].start > 0:
+                #        self.file2.write(str(self.piksi[1])+","+str(self.trackedHealth[1][0].x[0])+"\n")
 
  
 	####################################################################################
@@ -306,13 +342,13 @@ class GNN_Filter(Node):
         A_eq = np.ones((1,n),dtype = float)
         for i in range(n):    
             c[i] = np.trace(omega_[i])
-        #result = linprog(c.T, A_ub = None, b_ub = None, A_eq = A_eq, b_eq = 1, bounds = [0,1])
-        #w_ = result.x
-        w = cp.Variable(n)
-        prob = cp.Problem(cp.Minimize(c.T @ w),[A_eq @ w == 1])
-        prob.solve()
-        w_= w.value
-        print("In slover",w_)
+        result = linprog(c.T, A_ub = None, b_ub = None, A_eq = A_eq, b_eq = 1, bounds = [0,1])
+        w_ = result.x
+        # w = cp.Variable(n)
+        # prob = cp.Problem(cp.Minimize(c.T @ w),[A_eq @ w == 1])
+        # prob.solve()
+        # w_= w.value
+        # print("In slover",w_)
         Sumx_CI = np.zeros((self.x_size,1), dtype = float)
         Sump_CI = np.zeros((self.x_size,self.x_size), dtype = float)
         W = 0.00
@@ -323,7 +359,7 @@ class GNN_Filter(Node):
         Sumx_CI = Sumx_CI/W
         Sump_CI = Sump_CI/W
         dt = self.get_clock().now().nanoseconds/10e9-t
-        print("Inside CI the weights are:{} {} and dt is{} \n ".format(w_,q_,dt))
+        # print("Inside CI the weights are:{} {} and dt is{} \n ".format(w_,q_,dt))
 
         return Sumx_CI, Sump_CI
 
@@ -379,7 +415,7 @@ class GNN_Filter(Node):
                         else:
                             self.assignmentTable[j, i] = 1
             self.optimal_cost_finder(data, flag,flag_)
-            # print("\n mahalonobis didtance: {}".format(self.mahalanobisDistance))
+            print("\n mahalonobis didtance: {}".format(self.mahalanobisDistance))
             data_= data
             
             
@@ -405,9 +441,9 @@ class GNN_Filter(Node):
             for  row, i in enumerate(col_ind):
                 objNum = row_ind[row]
                 if flag == 3: # if 10 else 2.5
-                    threshold = 5#5
+                    threshold = 4.5#5
                 else:
-                    threshold = 5#5
+                    threshold = 4.5#5
                     #print('\n inside loop of measurement {} with objNum {} threshold is {}'.format(i,objNum,threshold))
                 if (self.mahalanobisDistance[objNum][i]<threshold):
                     f = flag_ -1

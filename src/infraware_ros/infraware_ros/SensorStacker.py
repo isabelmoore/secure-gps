@@ -8,6 +8,7 @@ from rclpy.clock import Clock
 from geometry_msgs.msg import PoseWithCovarianceStamped, PointStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import NavSatFix, Imu
+
 # from darknet_ros_msgs.msg import BoundingBoxes
 from vision_msgs.msg import SMSensor, SensorH , SensorHCompact
 #### To use KalmanFilter(backup) change the trackeobject[i].x[1] to trackeobject[i].x[2]
@@ -93,13 +94,16 @@ class Sensor(Node):
 
         ### For sensors in the car
         if not self.infrastructure:
+
+
             print('yassss')
             self.pub_rate = 20
             self.VehicleSensorsData= SensorHCompact()
             self.create_subscription(Imu,'/vehicle/imu_cartesian', self.imu_callback,10)
             self.create_subscription(NavSatFix, '/vehicle/gps_cartesian', self.gps_callback, 10)
+            # self.create_subscription(NavSatFix, '/vehicle/gps_vehicle_cartesian', self.gps_vehicle_callback, 10)
             # self.create_subscription(NavSatFix, '/vehicle/gps_manipulated_cartesian', self.gps_callback, 10)
-            self.create_subscription(Odometry,'/vehicle/odom_cartesian', self.odom_callback,10)
+            # self.create_subscription(Odometry,'/vehicle/odom_cartesian', self.odom_callback,10)
             self.pubVehicleSensors = self.create_publisher(SensorHCompact, '/VehicleSensorsData', 10)
             self.create_timer(1/self.pub_rate, self.Vehicle_Sensor_publisher)
             self.last_position = None  # To store the last GPS position
@@ -466,7 +470,9 @@ class Sensor(Node):
 
     #################################################################
     ####### Vehicle Callbacks
-        
+ 	#######################################################
+
+
     def imu_callback(self,msg):
         imu_point = SensorH()
         # Assuming the IMU message contains orientation and linear acceleration
@@ -506,6 +512,15 @@ class Sensor(Node):
 
         # Update the last position to the current position
         self.last_position = current_position
+    def gps_vehicle_callback(self, msg):
+        current_position = (msg.latitude, msg.longitude)
+        # Append the current position as the last point
+        gps_point = SensorH()
+        gps_point.x = [current_position[0]]
+        gps_point.y = [current_position[1]]
+        gps_point.id = [3]  # Assuming a constant ID for simplicity
+        self.VehicleSensorsData.sensor.append(gps_point)
+
 
     # def gps_manipulated_callback(self, msg):
     #     gps_manipulated_point = SensorH()
@@ -517,15 +532,15 @@ class Sensor(Node):
     #     gps_manipulated_point.id = [2]
         
         # self.VehicleSensorsData.sensor.append(gps_manipulated_point)
-    def odom_callback(self, msg):
-        odom_point = SensorH()
-        # Odometry data typically contains both position and velocity
-        odom_point.x = [msg.pose.pose.position.x]
-        odom_point.y = [msg.pose.pose.position.y]
-        # odom_point.vx = [msg.twist.twist.linear.x]
-        # odom_point.vy = [msg.twist.twist.linear.y]
-        odom_point.id = [3]
-        self.VehicleSensorsData.sensor.append(odom_point)
+    # def odom_callback(self, msg):
+    #     odom_point = SensorH()
+    #     # Odometry data typically contains both position and velocity
+    #     odom_point.x = [msg.pose.pose.position.x]
+    #     odom_point.y = [msg.pose.pose.position.y]
+    #     # odom_point.vx = [msg.twist.twist.linear.x]
+    #     # odom_point.vy = [msg.twist.twist.linear.y]
+    #     odom_point.id = [4]
+    #     self.VehicleSensorsData.sensor.append(odom_point)
 
 
         

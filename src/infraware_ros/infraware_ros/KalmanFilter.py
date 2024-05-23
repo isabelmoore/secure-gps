@@ -23,9 +23,9 @@ class KalmanFilter:
                            [0, 1, 0]], dtype=float)
 
         # Sensor measurment noise matrix
-        self.R_IMU = np.diag([0.1,  0.1]) # this one!
-        self.R_Odom = np.diag([0.1, 0.1])
-        self.R_GPS = np.diag([0.1,0.1])
+        self.R_IMU = np.diag([1,  1]) # this one!
+        self.R_Odom =np.diag([10, 10])
+        self.R_GPS = np.diag([1,1])
 
     ####################################################################
     # Computes the continous white noise model base on
@@ -62,8 +62,8 @@ class KalmanFilter:
     def predict(self, dt):
         self.Update_flag = False
         self.maint += 1
-        # self.Q = 100*np.diag([0.2,0.2,0.01]) 
-        self.Q = self.piecewise_white_noise(dt)
+        self.Q = 10*np.diag([0.2,0.2,0.01]) 
+        # self.Q = self.piecewise_white_noise(dt)
         self.W = np.linalg.pinv(self.Q)
         V = 4.5
         self.F = np.array([[1, 0,-dt*V*(math.sin(self.x[2]))],

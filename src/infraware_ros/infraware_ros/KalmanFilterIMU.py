@@ -110,22 +110,24 @@ class KalmanFilterIMU:
         self.new = False
 
 
-    def EKF(self,vx,delta,z,dt):
+    def EKF_predict(self,vx,delta,dt):
         if vx > 0:
         
             self.F = self.Jacobian_F(self.x,vx,delta,dt)
             print("self.x",self.x,self.F,self.K,vx,delta)
             self.x = self.dynamic_model(self.x,vx,delta,dt)
+        else:
+            self.x = self.x
             print("HI")
-
+    def EKF_update(self,vx,z):
+        if vx > 0:
             self.P = self.F.dot(self.P).dot(self.F.T) + self.Q
             self.S = self.R + self.H.dot(self.P).dot(self.H.T)
 
             self.K = self.P.dot(self.H.T).dot(np.linalg.pinv(self.S))
             self.x = self.x + self.K.dot(z.reshape(2,1)-self.H.dot(self.x))
             self.P = (np.eye(self.x_size) - self.K.dot(self.H)).dot(self.P)
-        else:
-            self.x = self.x
+
 
 
    

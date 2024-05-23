@@ -42,6 +42,22 @@ def generate_launch_description():
                  executable='FilterVehicle',
                  name='infraware_filter_vehicle'
                  ),
+                 Node(
+                 package='infraware_ros',
+                 executable='FilterVehicleKF',
+                 name='infraware_filter_vehicle_kf'
+                 ),
+                 Node(
+                 package='infraware_ros',
+                 executable='FilterVehicleCI',
+                 name='infraware_filter_vehicle_ci'
+                 ),
+                 Node(
+                 package='infraware_ros',
+                 executable='FilterVehicleKFNO',
+                 name='infraware_filter_vehicle_kfno'
+                 ),
+                 
             ]
         ),
         

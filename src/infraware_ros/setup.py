@@ -26,6 +26,9 @@ setup(
         'console_scripts': [
         'FilterInfra = infraware_ros.Filter_Infrastructure:main',
         'FilterVehicle = infraware_ros.Filter_Vehicle:main',
+        'FilterVehicleKF = infraware_ros.Filter_Vehicle_KF:main',
+        'FilterVehicleCI = infraware_ros.Filter_Vehicle_CI:main',
+        'FilterVehicleKFNO = infraware_ros.Filter_Vehicle_KF_NO:main',
         'CPRecorder = infraware_ros.controlPointCollector:main',
         'SensorStacker = infraware_ros.SensorStacker:main',
         'Cartesian = infraware_ros.cartesian_convert:main',

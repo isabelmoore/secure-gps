@@ -111,7 +111,7 @@ with open('Track_circle_spoof.txt','r') as csvfile:
          total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
          total_error_1f.append(total_error)
          
-         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "KF", Scenario = "Circle",AverageHealth = 0.972)#978
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "KF W Chi-Squared", Scenario = "Circle",AverageHealth = 0.972)#978
          row_list.append(dict1)
 
 
@@ -121,7 +121,7 @@ with open('Track_lanechange_spoof.txt','r') as csvfile:
     for row in plots:
 
          total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
-         dict1 = dict(TotalError = total_error, Track = 2 , Algorithm = "KF", Scenario = "Lane_change",AverageHealth = 0.972)#967
+         dict1 = dict(TotalError = total_error, Track = 2 , Algorithm = "KF W Chi-Squared", Scenario = "Lane_change",AverageHealth = 0.972)#967
          row_list.append(dict1)
 
 with open('Track_straight_spoof.txt','r') as csvfile:
@@ -129,8 +129,79 @@ with open('Track_straight_spoof.txt','r') as csvfile:
     for row in plots:
          total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
 
-         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "KF", Scenario = "Straight",AverageHealth = 0.970)#980
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "KF W Chi-Squared", Scenario = "Straight",AverageHealth = 0.970)#980
          row_list.append(dict1)
+ 
+##################################################
+######### Opening KF withot CHi         
+path = "/home/iea/IEA_Demo/MKZ_SIMULATOR_PROTYPE1/Data/Ramp 0.1/KF_no_detector"
+os.chdir(path)
+print(os.getcwd())
+with open('Track_circle_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+	 
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+         total_error_1f.append(total_error)
+         
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "Naive KF", Scenario = "Circle",AverageHealth = 0.972)#978
+         row_list.append(dict1)
+
+
+
+with open('Track_lanechange_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+         dict1 = dict(TotalError = total_error, Track = 2 , Algorithm = "Naive KF", Scenario = "Lane_change",AverageHealth = 0.972)#967
+         row_list.append(dict1)
+
+with open('Track_straight_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "Naive KF", Scenario = "Straight",AverageHealth = 0.970)#980
+         row_list.append(dict1)
+         
+
+
+############################
+#### OPENING CI DATA ####
+############################
+
+path = "/home/iea/IEA_Demo/MKZ_SIMULATOR_PROTYPE1/Data/Ramp 0.1/CI"
+os.chdir(path)
+print(os.getcwd())
+with open('Track_circle_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+	 
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+         total_error_1f.append(total_error)
+         
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "CI W Chi-Squared", Scenario = "Circle",AverageHealth = 0.972)#978
+         row_list.append(dict1)
+
+
+
+with open('Track_lanechange_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+         dict1 = dict(TotalError = total_error, Track = 2 , Algorithm = "CI W Chi-Squared", Scenario = "Lane_change",AverageHealth = 0.972)#967
+         row_list.append(dict1)
+
+with open('Track_straight_spoof.txt','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter=',')
+    for row in plots:
+         total_error = np.sqrt(float(row[2])**2+float(row[3])**2)
+
+         dict1 = dict(TotalError = total_error, Track = 1, Algorithm = "CI W Chi-Squared", Scenario = "Straight",AverageHealth = 0.970)#980
+         row_list.append(dict1)
+
 
 
 
