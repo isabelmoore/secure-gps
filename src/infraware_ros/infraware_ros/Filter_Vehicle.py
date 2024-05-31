@@ -53,7 +53,7 @@ class GNN_Filter(Node):
 
         print('Filtering!')
         self.prev_time = Clock().now().nanoseconds
-        self.plot_timer = self.create_timer(40, self.export_health_data)  
+        self.plot_timer = self.create_timer(20, self.export_health_data)  
         self.plot_timer = self.create_timer(1, self.export_pos)
 
         #Initials plots
@@ -92,11 +92,14 @@ class GNN_Filter(Node):
         
 
     def export_health_data(self):
+        self._logger.info("Exporting health data...")
         for i in range(3):
             for j in range(1):
                 self.trackedHealth[i][j].export_to_excel()
 
     def export_pos(self):
+        self._logger.info("Exporting pos data...")
+
         # Create a DataFrame from the health data, Δm data, and time steps
         # self.get_logger().info(f'odom length: {len(self.sensor_x_odom)}, {len(self.sensor_y_odom)}')
         # self.get_logger().info(f'filter length: {len(self.track1[2])}, {len(self.track1[3])}')

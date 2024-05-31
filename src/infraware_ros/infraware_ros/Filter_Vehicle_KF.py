@@ -53,7 +53,7 @@ class GNN_Filter_KF(Node):
 
         print('Filtering!')
         self.prev_time = Clock().now().nanoseconds
-        self.plot_timer = self.create_timer(40, self.export_health_data)  
+        # self.plot_timer = self.create_timer(40, self.export_health_data)  
         self.plot_timer = self.create_timer(1, self.export_pos)
 
         #Initials plots

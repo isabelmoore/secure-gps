@@ -566,6 +566,8 @@ class Sensor(Node):
         self.pubVehicleSensors.publish(self.VehicleSensorsData)
         print("sensor",self.VehicleSensorsData)
         self.VehicleSensorsData = SensorHCompact()
+        for sensor_data in self.VehicleSensorsData.sensor:
+            self.get_logger().info(f"\nIMU Data:\t \t{sensor_data.x[0]}, \t{sensor_data.y[0]}")
    
     # def log_all_data(self):
     #     current_time = self.get_clock().now().to_msg().sec  # Get current time in seconds
