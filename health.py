@@ -26,8 +26,9 @@ plt.ylabel('Distance (m)')
 plt.ylim(0,0.5)
 plt.grid(True)
 plt.tight_layout()
-
 plt.savefig('pos.png')
+plt.show()
+
 
 plt.figure(figsize=(7, 4))
 plt.scatter(time, dmdt, color=color_arr[2], s=4)
@@ -37,6 +38,7 @@ plt.ylabel('Velocity (m/s)')
 plt.grid(True)
 plt.tight_layout()
 plt.savefig('vel.png')
+plt.show()
 
 plt.figure(figsize=(7, 4))
 plt.scatter(time, domega, color=color_arr[2], s=4)
@@ -46,8 +48,8 @@ plt.ylabel('Angle (Rad)')
 plt.ylim(-0.1,0.1)
 plt.grid(True)
 plt.tight_layout()
-
 plt.savefig('angle.png')
+plt.show()
 
 plt.figure(figsize=(7, 4))
 plt.scatter(time, health, color=color_arr[2], s=4)
@@ -56,6 +58,6 @@ plt.xlabel('Time (s)')
 plt.ylabel('Health')
 plt.grid(True)
 plt.tight_layout()
-
 plt.savefig('health.png')
+plt.show()
 

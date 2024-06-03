@@ -25,7 +25,7 @@ class SensorProcessingNode(Node):
         super().__init__('sensor_processing_node')
         # self.imu_subscription = self.create_subscription(Imu, '/vehicle/imu_plugin/out', self.imu_callback, 10)
         self.gps_vehicle_subscription = self.create_subscription(NavSatFix, '/vehicle/gps/fix', self.gps_vehicle_callback, 10)
-        # self.gps_subscription = self.create_subscription(NavSatFix, '/manipulated_gps/global', self.gps_manipulated_callback, 10) # use local because all cartesian coordinates are local
+        self.gps_subscription = self.create_subscription(NavSatFix, '/manipulated_gps/global', self.gps_manipulated_callback, 10) # use local because all cartesian coordinates are local
         # self.odometry_subscription = self.create_subscription(Odometry, '/vehicle/odom', self.odometry_callback, 10)
         
         self.create_subscription(Baseline, '/baseline',  self.piksi_callback,10)
@@ -41,7 +41,7 @@ class SensorProcessingNode(Node):
         self.imu_publisher = self.create_publisher(Imu, '/vehicle/imu_cartesian', 10)
         self.gps_publisher = self.create_publisher(NavSatFix, '/vehicle/gps_cartesian', 10)
         self.gps_vehicle_publisher = self.create_publisher(NavSatFix, '/vehicle/gps_vehicle_cartesian', 10)
-        # self.gps_manipulated_publisher = self.create_publisher(NavSatFix, '/vehicle/gps_manipulated_cartesian', 10)
+        self.gps_manipulated_publisher = self.create_publisher(NavSatFix, '/vehicle/gps_manipulated_cartesian', 10)
         # self.odom_publisher = self.create_publisher(Odometry, '/vehicle/odom_cartesian', 10)
 
         # Initialize variables for data accumulation
@@ -75,43 +75,7 @@ class SensorProcessingNode(Node):
         self.offset2=0
         self.offset3 =0
         self.vehicle_speed = None
-        # self.fig, self.axs = plt.subplots(3, 1, figsize=(10, 8))
-        # self.fig.suptitle('Sensor Data Over Time')
-        # self.axs[0].set_title('X Position')
-        # self.axs[1].set_title('Y Position')
-        # self.axs[2].set_title('Z Position')
-
-        # for ax in self.axs:
-        #     ax.set_xlabel('Time')
-        #     ax.set_ylabel('Position')
-        #     ax.grid(True)
-
-        # # For 3D trajectory plot
-        # self.fig_3d = plt.figure(figsize=(10, 7))
-        # self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
-        # self.ax_3d.set_title('3D Trajectories of IMU, GPS, and Odom Data')
-
-        # # Setting the labels and title
-        # self.ax_3d.set_xlabel('X Position')
-        # self.ax_3d.set_ylabel('Y Position')
-        # self.ax_3d.set_zlabel('Z Position')
-        # self.ax_3d.legend()
-        
-
-        ''' Velocity Plotting '''
-        # self.imu_velocities = [[], []]
-        # self.odom_velocities = [[], []]
-
-        # self.fig, self.axs = plt.subplots(2, 1, figsize=(10, 8))
-        # self.fig.suptitle('Sensor Data Over Time')
-        # self.axs[0].set_title('Linear X Velocity')
-        # self.axs[1].set_title('Linear Y Velocity')
-
-        # for ax in self.axs:
-        #     ax.set_xlabel('Time')
-        #     ax.set_ylabel('Linear Velocity')
-        #     ax.grid(True)
-
+   
         self.initial_gps_position_ecef = None
         self.initial_gps_vehicle_position_ecef = None
         self.initial_gps_manipulated_position_ecef = None
@@ -136,9 +100,6 @@ class SensorProcessingNode(Node):
         if self.piksi_initial is None:
            self.piksi_initial = [data.baseline_e_m,data.baseline_n_m,data.baseline_d_m]
         self.piksi = [data.baseline_e_m-self.piksi_initial[0],data.baseline_n_m-self.piksi_initial[1]]
-        # self.piksi_append[0].append(data.baseline_e_m-self.piksi_initial[0])
-        # self.piksi_append[1].append(data.baseline_n_m-self.piksi_initial[1])     
-
 
     def wheel_encoder_callback(self,msg):
         self.steering = msg.steering_wheel_angle
@@ -212,7 +173,7 @@ class SensorProcessingNode(Node):
         self.offset3 += 0.1
         
         gps_msg = NavSatFix()
-        gps_msg.latitude = self.gps_position[0] +self.offset2
+        gps_msg.latitude = self.gps_position[0] #+self.offset3
         gps_msg.longitude = self.gps_position[1]
         gps_msg.altitude = self.gps_position[2]
         self.gps_offest1 = self.gps_position[0]+self.offset1
@@ -226,6 +187,33 @@ class SensorProcessingNode(Node):
             self.GPS_published = True
         if self.piksi_initial is not None:
            self.file1.write(str(self.piksi[1]) +"," + str(self.piksi[0]) +"," + str(self.gps_position[1]) + "," +str(self.gps_position[0]) +"," +str(self.gps_offest1)+","+ str(self.gps_offest2)+ ","+str(self.gps_offest3)+"\n")
+
+    def gps_manipulated_callback(self, msg):
+        # Convert latitude, longitude, and altitude to Cartesian ECEF coordinates
+        ecef_coords = self.gps_to_ecef(msg.latitude, msg.longitude, msg.altitude)
+        # Make sure to convert the tuple to a NumPy array
+        if self.initial_gps_manipulated_position_ecef is None:
+            self.initial_gps_manipulated_position_ecef = np.array(ecef_coords)
+            self.initial_gps_manipulated_rotation = self.rotation_matrix(msg.latitude, msg.longitude, msg.altitude)
+            #self.gps_published = True
+
+        self.gps_manipulated_position = self.initial_gps_manipulated_rotation.dot(np.array(ecef_coords) - self.initial_gps_manipulated_position_ecef)
+        # self.gps_position = np.array(ecef_coords) - self.initial_gps_position_ecef
+        # if self.gps_position[1]>5 and self.gps_position[1]<15:
+        
+        gps_msg = NavSatFix()
+        gps_msg.latitude = self.gps_manipulated_position[0]
+        gps_msg.longitude = self.gps_manipulated_position[1]
+        gps_msg.altitude = self.gps_manipulated_position[2]
+  
+
+        # Publish the manipulated GPS data
+        self.gps_manipulated_publisher.publish(gps_msg)
+        # self.i += 1
+        # if self.i >5:
+        #     self.GPS_published = True
+        # if self.piksi_initial is not None:
+        #    self.file1.write(str(self.piksi[1]) +"," + str(self.piksi[0]) +"," + str(self.gps_position[1]) + "," +str(self.gps_position[0]) +"," +str(self.gps_offest1)+","+ str(self.gps_offest2)+ ","+str(self.gps_offest3)+"\n")
 
 
     def gps_vehicle_callback(self, msg):

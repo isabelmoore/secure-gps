@@ -39,8 +39,9 @@ plt.plot(df1_circle['Filter X'].to_numpy(),df1_circle['Filter Y'].to_numpy(),col
 plt.xlabel('South Direction (m)')
 plt.ylabel('East Direction (m)')
 plt.legend(loc='upper right')
-plt.savefig("TrackCircle.pdf", format="pdf", bbox_inches="tight")
 plt.show()
+plt.savefig("TrackCircle.pdf", format="pdf", bbox_inches="tight")
+
 
 fig, ax = plt.subplots(figsize=(5,6))
 plt.plot(df1_Lanechange['Ground Truth X'].to_numpy(),df1_Lanechange['Ground Truth Y'].to_numpy(),color='k',label="Ground Truth")

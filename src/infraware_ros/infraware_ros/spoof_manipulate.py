@@ -31,8 +31,8 @@ class SpoofManipulate(Node):
 
     def random_bearing(self):
         # Generate two random bearings: one for latitude and one for longitude
-        bearing_lat = random.uniform(-90, 90)
-        bearing_long = random.uniform(-180, 180)
+        bearing_lat = random.uniform(-20, 20)
+        bearing_long = random.uniform(-40, 40)
         return bearing_lat, bearing_long
     
     def gps_callback(self, msg):
@@ -47,7 +47,7 @@ class SpoofManipulate(Node):
         bearing_lat, bearing_long = self.random_bearing()
         
         # Define the distance to move along these bearings in meters
-        distance = 6 # meters
+        distance = 3 # meters
 
         # Calculate the new latitude using the random bearing and distance
         geod = Geodesic.WGS84
